@@ -254,13 +254,13 @@ const App = {
         modalContainer.innerHTML = `
             <div class="modal-content" style="width: 500px;">
                 <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Resumen Anual ${currentYear}</h2>
-                <div class="table-container" style="max-height: 60vh; overflow-y: auto;">
+                <div class="table-container" style="max-height: 300px; overflow-y: scroll; display: block; border: 1px solid var(--border); border-radius: var(--radius);">
                     <table class="yearly-summary-table" style="width: 100%;">
                         <thead>
                             <tr>
-                                <th style="background: var(--bg-sidebar); padding: 10px;">Mes</th>
-                                <th style="background: var(--bg-sidebar); padding: 10px; text-align: center;">Cant.</th>
-                                <th style="background: var(--bg-sidebar); padding: 10px; text-align: right;">Total</th>
+                                <th style="background: var(--bg-sidebar); padding: 10px; position: sticky; top: 0; z-index: 1;">Mes</th>
+                                <th style="background: var(--bg-sidebar); padding: 10px; text-align: center; position: sticky; top: 0; z-index: 1;">Cant.</th>
+                                <th style="background: var(--bg-sidebar); padding: 10px; text-align: right; position: sticky; top: 0; z-index: 1;">Total</th>
                             </tr>
                         </thead>
                         <tbody>
