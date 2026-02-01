@@ -1040,6 +1040,7 @@
                 const clients = Store.state.clients;
                 const currentUser = Store.state.currentUser;
                 const canEditOrDelete = currentUser && currentUser.role !== 'Vendedor';
+                const isVendedor = currentUser && currentUser.role === 'Vendedor';
 
                 // Render structure first, then initialize table body
                 return `
