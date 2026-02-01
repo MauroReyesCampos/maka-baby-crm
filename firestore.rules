@@ -4,9 +4,8 @@ service cloud.firestore {
     
     // Función auxiliar para obtener el rol del usuario actual
     function getUserRole() {
-      // Verifica si el usuario está autenticado y tiene un documento en 'users'
-      // Retorna el rol o null si no existe
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+       let r = get(/databases/$(database)/documents/users/$(request.auth.uid));
+       return r != null ? r.data.role : null;
     }
 
     function isAuthenticated() {
