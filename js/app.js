@@ -254,7 +254,7 @@ const App = {
         modalContainer.innerHTML = `
             <div class="modal-content" style="width: 500px;">
                 <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Resumen Anual ${currentYear}</h2>
-                <div class="table-container">
+                <div class="table-container" style="max-height: 60vh; overflow-y: auto;">
                     <table class="yearly-summary-table" style="width: 100%;">
                         <thead>
                             <tr>
