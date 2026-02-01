@@ -999,17 +999,36 @@
                 document.getElementById('close-modal').onclick = () => modalContainer.style.display = 'none';
                 document.getElementById('new-user-form').onsubmit = async (e) => {
                     e.preventDefault();
+                    const submitBtn = e.target.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.innerText;
+                    submitBtn.disabled = true;
+                    submitBtn.innerText = 'Procesando...';
+
                     const data = Object.fromEntries(new FormData(e.target));
 
-                    if (id) {
-                        const updatedUser = { name: data.name, email: data.email };
-                        if (data.password) updatedUser.password = data.password;
-                        if (data.role) updatedUser.role = data.role;
-                        await Store.updateUser(id, updatedUser);
-                    } else {
-                        await Store.registerUser(data);
+                    try {
+                        let result;
+                        if (id) {
+                            const updatedUser = { name: data.name, email: data.email };
+                            if (data.password) updatedUser.password = data.password;
+                            if (data.role) updatedUser.role = data.role;
+                            result = await Store.updateUser(id, updatedUser);
+                            alert('Usuario actualizado con éxito');
+                        } else {
+                            result = await Store.registerUser(data);
+                            if (result.success) {
+                                alert('Usuario creado con éxito');
+                            } else {
+                                throw new Error(result.message);
+                            }
+                        }
+                        modalContainer.style.display = 'none';
+                    } catch (error) {
+                        alert(`Error: ${error.message}`);
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = originalText;
                     }
-                    modalContainer.style.display = 'none';
                 };
             }
         };

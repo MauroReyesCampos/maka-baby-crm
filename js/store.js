@@ -1,4 +1,5 @@
-import { db, auth } from './firebase-config.js';
+import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { db, auth, firebaseConfig } from './firebase-config.js';
 import {
     collection,
     addDoc,
@@ -16,7 +17,8 @@ import {
     signOut,
     onAuthStateChanged,
     updateProfile,
-    updatePassword
+    updatePassword,
+    getAuth
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 export const Store = {
@@ -198,6 +200,7 @@ export const Store = {
 
     // User Management Methods (Firestore based)
     async registerUser(userData) {
+        let secondaryApp = null;
         try {
             // Direct Firestore check to bypass state sync delays
             const usersRef = collection(db, "users");
@@ -212,14 +215,23 @@ export const Store = {
                 throw new Error("El sistema ya ha sido inicializado. Inicie sesión para añadir usuarios.");
             }
 
+            let targetAuth = auth;
+
+            // Si hay un admin logueado, usar una App secundaria para no desloguearlo
+            if (currentUser) {
+                const secondaryAppName = `secondaryApp_${Date.now()}`;
+                secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+                targetAuth = getAuth(secondaryApp);
+            }
+
             // 1. Create the account in Firebase Auth
-            const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
+            const userCredential = await createUserWithEmailAndPassword(targetAuth, userData.email, userData.password);
             const user = userCredential.user;
 
             // 2. Set the display name
             await updateProfile(user, { displayName: userData.name });
 
-            // 3. Save additional info to Firestore 'users' collection
+            // 3. Save additional info to Firestore 'users' collection (using main db)
             await addDoc(collection(db, "users"), {
                 uid: user.uid,
                 name: userData.name,
@@ -228,9 +240,17 @@ export const Store = {
                 createdAt: new Date().toISOString()
             });
 
+            // Cleanup secondary app if used
+            if (secondaryApp) {
+                await deleteApp(secondaryApp);
+            }
+
             return { success: true };
         } catch (error) {
             console.error("Error en registro:", error);
+            if (secondaryApp) {
+                await deleteApp(secondaryApp).catch(console.error);
+            }
             return { success: false, message: error.message };
         }
     },
