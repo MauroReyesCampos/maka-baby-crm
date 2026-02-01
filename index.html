@@ -1333,6 +1333,7 @@
                 return this.renderLogin();
             },
             renderLogin() {
+                const hasUsers = Store.state.users.length > 0;
                 return `
                     <div class="auth-container fade-in">
                         <div class="auth-card">
@@ -1350,9 +1351,11 @@
                                 </div>
                                 <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:1rem;">Entrar</button>
                             </form>
+                            ${!hasUsers ? `
                             <div class="auth-footer" style="margin-top: 2rem;">
                                 <p>¿No tienes cuenta? <a href="#register" class="auth-link">Crear Administrador Maestro</a></p>
                             </div>
+                            ` : ''}
                         </div>
                     </div>
                 `;
@@ -1436,9 +1439,28 @@
             handleRoute() {
                 const hash = window.location.hash || '#dashboard';
                 const user = Store.state.currentUser;
-                if (!user && !['#login', '#register'].includes(hash)) { window.location.hash = '#login'; return; }
-                if (user && ['#login', '#register'].includes(hash)) { window.location.hash = '#dashboard'; return; }
-                Store.setRoute(hash); this.render();
+                const hasUsers = Store.state.users.length > 0;
+
+                // If no user is logged in
+                if (!user) {
+                    // If no users exist in the system, redirect to register
+                    if (!hasUsers && hash !== '#register') {
+                        window.location.hash = '#register';
+                        return;
+                    }
+                    // If users exist but not logged in, redirect to login unless on register/login
+                    if (hasUsers && !['#login', '#register'].includes(hash)) {
+                        window.location.hash = '#login';
+                        return;
+                    }
+                } else if (['#login', '#register'].includes(hash)) {
+                    // If user is logged in and tries to access auth pages, redirect to dashboard
+                    window.location.hash = '#dashboard';
+                    return;
+                }
+
+                Store.setRoute(hash);
+                this.render();
             },
             render() {
                 const hash = Store.state.currentRoute;

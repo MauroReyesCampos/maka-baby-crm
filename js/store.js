@@ -167,10 +167,15 @@ export const Store = {
             const salesSnapshot = await getDocs(collection(db, "sales"));
             const salesDeletions = salesSnapshot.docs.map(d => deleteDoc(doc(db, "sales", d.id)));
 
-            await Promise.all([...clientDeletions, ...salesDeletions]);
+            // Clear Users
+            const usersSnapshot = await getDocs(collection(db, "users"));
+            const userDeletions = usersSnapshot.docs.map(d => deleteDoc(doc(db, "users", d.id)));
 
-            // Clear LocalStorage
+            await Promise.all([...clientDeletions, ...salesDeletions, ...userDeletions]);
+
+            // Clear Local and Session Storage
             localStorage.clear();
+            sessionStorage.clear();
 
             console.log('Toda la información ha sido eliminada.');
             return { success: true };
