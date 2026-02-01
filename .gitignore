@@ -1,0 +1,14 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.log
+tmp/
+.temp/
+
+# IDE files
+.vscode/
+.idea/
+.gemini/
+brain/
