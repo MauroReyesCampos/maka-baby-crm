@@ -216,12 +216,12 @@ const App = {
                     <div style="font-size: 1.8rem; font-weight: 700; color: var(--secondary);">${monthSales.length}</div>
                 </div>
                 <div class="card stat-card">
-                    <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Ventas del Mes ($)</div>
-                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);">$${monthTotal.toLocaleString()}</div>
-                </div>
-                <div class="card stat-card">
                     <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Por Cobrar (Mes)</div>
                     <div style="font-size: 1.8rem; font-weight: 700; color: var(--danger);">$${pendingTotal.toLocaleString()}</div>
+                </div>
+                <div class="card stat-card">
+                    <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Ventas del Mes ($)</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);">$${monthTotal.toLocaleString()}</div>
                 </div>
                 <div class="card stat-card" id="year-stat-card" style="cursor: pointer; position: relative;">
                     <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Total Ventas Año (${currentYear})</div>
