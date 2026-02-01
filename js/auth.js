@@ -20,12 +20,7 @@ export const AuthModule = {
                         </div>
                         <div class="form-group">
                             <label>Contraseña</label>
-                            <div style="position: relative;">
-                                <input type="password" class="form-control" name="password" id="password-input" required style="padding-right: 40px;">
-                                <button type="button" id="toggle-password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted);">
-                                    👁️
-                                </button>
-                            </div>
+                            <input type="password" class="form-control" name="password" required>
                         </div>
                         <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:1rem;">Entrar</button>
                     </form>
@@ -77,16 +72,6 @@ export const AuthModule = {
                 if (result.success) window.location.hash = '#dashboard';
                 else alert(`Error: ${result.message}`);
             };
-
-            const togglePasswordBtn = document.getElementById('toggle-password');
-            const passwordInput = document.getElementById('password-input');
-            if (togglePasswordBtn && passwordInput) {
-                togglePasswordBtn.onclick = () => {
-                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                    passwordInput.setAttribute('type', type);
-                    togglePasswordBtn.innerText = type === 'password' ? '👁️' : '🙈';
-                };
-            }
         }
 
         if (registerForm) {
