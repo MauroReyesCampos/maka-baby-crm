@@ -8,7 +8,6 @@ import {
     setDoc,
     getDoc,
     onSnapshot,
-    onSnapshot,
     query,
     where,
     getDocs
