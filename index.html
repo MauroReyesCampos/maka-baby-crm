@@ -1329,7 +1329,12 @@
         const AuthModule = {
             render() {
                 const hash = window.location.hash;
-                if (hash === '#register') return this.renderRegister();
+                const hasUsers = Store.state.users.length > 0;
+
+                if (hash === '#register') {
+                    if (hasUsers) return this.renderLogin(); // Fallback if somehow reached
+                    return this.renderRegister();
+                }
                 return this.renderLogin();
             },
             renderLogin() {
@@ -1448,8 +1453,13 @@
                         window.location.hash = '#register';
                         return;
                     }
-                    // If users exist but not logged in, redirect to login unless on register/login
-                    if (hasUsers && !['#login', '#register'].includes(hash)) {
+                    // CRITICAL: If users exist, BLOQUED PUBLIC REGISTRATION
+                    if (hasUsers && hash === '#register') {
+                        window.location.hash = '#login';
+                        return;
+                    }
+                    // If users exist but not logged in, redirect to login unless on login
+                    if (hasUsers && hash !== '#login') {
                         window.location.hash = '#login';
                         return;
                     }
