@@ -5,6 +5,7 @@ import {
     updateDoc,
     deleteDoc,
     doc,
+    setDoc,
     getDoc,
     onSnapshot,
     query,
@@ -208,7 +209,8 @@ export const Store = {
             await updateProfile(user, { displayName: userData.name });
 
             // 3. Save additional info to Firestore 'users' collection
-            await addDoc(collection(db, "users"), {
+            // FIXED: Use setDoc with user.uid to ensure the ID matches what onAuthStateChanged uses
+            await setDoc(doc(db, "users", user.uid), {
                 uid: user.uid,
                 name: userData.name,
                 email: userData.email,
