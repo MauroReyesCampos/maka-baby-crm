@@ -1457,8 +1457,8 @@
                 const users = Store.state.users;
                 const hasUsers = users.length > 0;
 
-                // Wait for initial users load to avoid incorrect redirection
-                if (Store.state.loading && users.length === 0) {
+                // Wait for initial data load
+                if (Store.state.loading) {
                     this.contentArea.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100vh;">Cargando sistema...</div>';
                     return;
                 }
