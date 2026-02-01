@@ -34,10 +34,11 @@ service cloud.firestore {
       // Permitir leer si es el propio usuario (para login) o si es Admin/Super Admin
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       
-      // SOLO Admin/Super Admin pueden crear o modificar usuarios
-      // Nota: Para el primer registro del sistema (Setup), estas reglas podrían bloquear.
-      // Se asume que el Super Admin ya existe.
-      allow create, update, delete: if isAdmin();
+      // Permitir crear su propio usuario (Bootstrap / Registro)
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+
+      // SOLO Admin/Super Admin pueden modificar o eliminar usuarios
+      allow update, delete: if isAdmin();
     }
     
     // Colección de Clientes (clients)
