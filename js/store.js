@@ -1,5 +1,4 @@
-import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { db, auth, firebaseConfig } from './firebase-config.js';
+import { db, auth } from './firebase-config.js';
 import {
     collection,
     addDoc,
@@ -8,9 +7,7 @@ import {
     doc,
     onSnapshot,
     query,
-    getDocs,
-    limit,
-    where
+    getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
     signInWithEmailAndPassword,
@@ -18,8 +15,7 @@ import {
     signOut,
     onAuthStateChanged,
     updateProfile,
-    updatePassword,
-    getAuth
+    updatePassword
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 export const Store = {
@@ -43,31 +39,15 @@ export const Store = {
     },
 
     init() {
-        // Listen for Users independently of auth (to detect "system fresh" state)
-        onSnapshot(collection(db, "users"), (snapshot) => {
-            this.state.users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            this.state.loading = false;
-            this.notify();
-        }, (error) => {
-            console.error("Error listening to users:", error);
-            this.state.loading = false;
-            this.notify();
-        });
-
         // Listen for Auth changes
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Find user role from the already-loaded users array
-                const userDoc = this.state.users.find(u => u.uid === user.uid);
-                const role = userDoc ? userDoc.role : 'Admin';
-
                 this.state.currentUser = {
                     uid: user.uid,
                     name: user.displayName || user.email.split('@')[0],
                     email: user.email,
-                    role: role
+                    role: 'Super Admin' // Default for now, should be fetched from a user doc
                 };
-                this.notify();
                 this.initDataListeners();
             } else {
                 this.state.currentUser = null;
@@ -91,22 +71,25 @@ export const Store = {
             this.state.sales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             this.notify();
         });
+
+        // Listen for Users
+        onSnapshot(collection(db, "users"), (snapshot) => {
+            this.state.users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            this.notify();
+        });
     },
 
     // Client Methods
     async addClient(client) {
-        if (this.state.currentUser.role === 'Vendedor') throw new Error("Acceso denegado");
         await addDoc(collection(db, "clients"), client);
     },
 
     async updateClient(id, updatedClient) {
-        if (this.state.currentUser.role === 'Vendedor') throw new Error("Acceso denegado");
         const clientRef = doc(db, "clients", id);
         await updateDoc(clientRef, updatedClient);
     },
 
     async deleteClient(id) {
-        if (this.state.currentUser.role === 'Vendedor') throw new Error("Acceso denegado");
         await deleteDoc(doc(db, "clients", id));
     },
 
@@ -134,13 +117,11 @@ export const Store = {
     },
 
     async updateSale(id, updatedData) {
-        if (this.state.currentUser.role === 'Vendedor') throw new Error("Acceso denegado");
         const saleRef = doc(db, "sales", id);
         await updateDoc(saleRef, updatedData);
     },
 
     async deleteSale(id) {
-        if (this.state.currentUser.role === 'Vendedor') throw new Error("Acceso denegado");
         await deleteDoc(doc(db, "sales", id));
     },
 
@@ -186,15 +167,10 @@ export const Store = {
             const salesSnapshot = await getDocs(collection(db, "sales"));
             const salesDeletions = salesSnapshot.docs.map(d => deleteDoc(doc(db, "sales", d.id)));
 
-            // Clear Users
-            const usersSnapshot = await getDocs(collection(db, "users"));
-            const userDeletions = usersSnapshot.docs.map(d => deleteDoc(doc(db, "users", d.id)));
+            await Promise.all([...clientDeletions, ...salesDeletions]);
 
-            await Promise.all([...clientDeletions, ...salesDeletions, ...userDeletions]);
-
-            // Clear Local and Session Storage
+            // Clear LocalStorage
             localStorage.clear();
-            sessionStorage.clear();
 
             console.log('Toda la información ha sido eliminada.');
             return { success: true };
@@ -206,38 +182,15 @@ export const Store = {
 
     // User Management Methods (Firestore based)
     async registerUser(userData) {
-        let secondaryApp = null;
         try {
-            // Direct Firestore check to bypass state sync delays
-            const usersRef = collection(db, "users");
-            const q = query(usersRef, limit(1));
-            const snapshot = await getDocs(q);
-            const hasUsers = !snapshot.empty;
-
-            const currentUser = this.state.currentUser;
-
-            // Bloquear registro público si ya existe al menos un usuario
-            if (hasUsers && !currentUser) {
-                throw new Error("El sistema ya ha sido inicializado. Inicie sesión para añadir usuarios.");
-            }
-
-            let targetAuth = auth;
-
-            // Si hay un admin logueado, usar una App secundaria para no desloguearlo
-            if (currentUser) {
-                const secondaryAppName = `secondaryApp_${Date.now()}`;
-                secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
-                targetAuth = getAuth(secondaryApp);
-            }
-
             // 1. Create the account in Firebase Auth
-            const userCredential = await createUserWithEmailAndPassword(targetAuth, userData.email, userData.password);
+            const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
             const user = userCredential.user;
 
             // 2. Set the display name
             await updateProfile(user, { displayName: userData.name });
 
-            // 3. Save additional info to Firestore 'users' collection (using main db)
+            // 3. Save additional info to Firestore 'users' collection
             await addDoc(collection(db, "users"), {
                 uid: user.uid,
                 name: userData.name,
@@ -246,17 +199,9 @@ export const Store = {
                 createdAt: new Date().toISOString()
             });
 
-            // Cleanup secondary app if used
-            if (secondaryApp) {
-                await deleteApp(secondaryApp);
-            }
-
             return { success: true };
         } catch (error) {
             console.error("Error en registro:", error);
-            if (secondaryApp) {
-                await deleteApp(secondaryApp).catch(console.error);
-            }
             return { success: false, message: error.message };
         }
     },

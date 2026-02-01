@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-export const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyAABB6m_D6sss3m99-uJj3KcmcBLonH21M",
   authDomain: "maka-baby-crm.firebaseapp.com",
   projectId: "maka-baby-crm",

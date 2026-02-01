@@ -76,11 +76,12 @@
         }
 
         .logo-img {
-            width: 70px;
-            height: 70px;
+            width: 50px;
+            height: 50px;
             object-fit: contain;
             border-radius: 50%;
-            opacity: 0.8;
+            background: white;
+            border: 1px solid var(--border);
         }
 
         .logo-text {
@@ -482,9 +483,12 @@
         }
 
         .auth-logo {
-            width: 120px;
-            height: 120px;
+            width: 80px;
+            height: 80px;
             margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            padding: 5px;
         }
 
         .auth-title {
@@ -771,7 +775,7 @@
         const ClientsModule = {
             render() {
                 const clients = Store.state.clients;
-                const isVendedor = Store.state.currentUser && Store.state.currentUser.role === 'Vendedor';
+                const canEditOrDelete = Store.state.currentUser && Store.state.currentUser.role !== 'Vendedor';
                 return `
                     <div class="card fade-in">
                         <div class="table-container">
@@ -779,24 +783,24 @@
                                 <thead>
                                     <tr>
                                         <th>Nombre/Razon Social</th>
-                                        <th>Cedula/NIT</th>
+                                        <th>Dirección</th>
+                                        <th>Complemento</th>
                                         <th>Telefono</th>
-                                        <th>Ciudad</th>
-                                        <th style="text-align: right;">Acciones</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${clients.length > 0 ? clients.map(client => `
                                         <tr>
                                             <td data-label="Nombre"><div style="font-weight: 600;">${client.name}</div></td>
-                                            <td data-label="Cedula/NIT">${client.nit}</td>
+                                            <td data-label="NIT/Cédula">${client.nit}</td>
                                             <td data-label="Teléfono">${client.phone}</td>
                                             <td data-label="Ciudad">${client.city}</td>
                                             <td data-label="Acciones">
                                                 <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                                                    ${!isVendedor ? `
-                                                        <button class="btn-icon" onclick="ClientsModule.showModal('${client.id}')" title="Editar">✏️</button>
-                                                        <button class="btn-icon" onclick="ClientsModule.deleteClient('${client.id}')" title="Eliminar">🗑️</button>
+                                                    ${canEditOrDelete ? `
+                                                        <button class="btn-icon" onclick="ClientsModule.showModal(${client.id})" title="Editar">✏️</button>
+                                                        <button class="btn-icon" onclick="ClientsModule.deleteClient(${client.id})" title="Eliminar">🗑️</button>
                                                     ` : '<span style="color: var(--text-muted); font-size: 0.8rem;">Solo lectura</span>'}
                                                 </div>
                                             </td>
@@ -809,15 +813,24 @@
                 `;
             },
             init() {
+                // No need for contentArea.onclick listener as actions are now direct onclicks
                 const addBtn = document.getElementById('add-btn');
-                if (addBtn) addBtn.onclick = () => this.showModal();
+                if (addBtn) {
+                    addBtn.onclick = () => {
+                        if (Store.state.currentUser && Store.state.currentUser.role === 'Vendedor') {
+                            alert('No tienes permisos para añadir clientes.');
+                            return;
+                        }
+                        this.showModal();
+                    };
+                }
             },
             showModal(id = null) {
                 if (Store.state.currentUser && Store.state.currentUser.role === 'Vendedor') {
-                    alert('No tienes permisos.');
+                    alert('No tienes permisos para editar clientes.');
                     return;
                 }
-                const client = id ? Store.state.clients.find(c => String(c.id) === String(id)) : {
+                const client = id ? Store.state.clients.find(c => c.id === Number(id)) : {
                     name: '', nit: '', phone: '', address: '', complement: '', neighborhood: '', city: '', state: ''
                 };
                 const modalContainer = document.getElementById('modal-container');
@@ -884,9 +897,13 @@
                 phoneInput.addEventListener('input', (e) => {
                     let value = e.target.value.replace(/\D/g, '');
                     if (value.length > 0) {
-                        if (value.length <= 3) { value = `(${value}`; }
-                        else if (value.length <= 10) { value = `(${value.slice(0, 3)}) ${value.slice(3)}`; }
-                        else { value = `(${value.slice(0, 3)}) ${value.slice(3, 10)}`; }
+                        if (value.length <= 3) {
+                            value = `(${value}`;
+                        } else if (value.length <= 10) {
+                            value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+                        } else {
+                            value = `(${value.slice(0, 3)}) ${value.slice(3, 10)}`;
+                        }
                     }
                     e.target.value = value;
                 });
@@ -902,7 +919,7 @@
             },
             async deleteClient(id) {
                 if (Store.state.currentUser && Store.state.currentUser.role === 'Vendedor') {
-                    alert('No tienes permisos.');
+                    alert('No tienes permisos para eliminar clientes.');
                     return;
                 }
                 if (confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
@@ -936,7 +953,7 @@
                                             <td data-label="Acciones">
                                                 <div style="display: flex; gap: 10px;">
                                                     <button class="btn-icon edit-user" data-id="${user.id}" title="Editar">✏️</button>
-                                                    <button class="btn-icon delete-user" data-id="${user.id}" ${user.uid === Store.state.currentUser.uid ? 'disabled' : ''} title="Eliminar">🗑️</button>
+                                                    <button class="btn-icon delete-user" data-id="${user.id}" ${user.role === 'Super Admin' ? 'disabled' : ''} title="Eliminar">🗑️</button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -967,7 +984,7 @@
                 if (addBtn) addBtn.onclick = () => this.showModal();
             },
             showModal(id = null) {
-                const user = id ? Store.state.users.find(u => String(u.id) === String(id)) : { name: '', email: '', password: '', role: 'Admin' };
+                const user = id ? Store.state.users.find(u => u.id === id) : { name: '', email: '', password: '', role: 'Admin' };
                 const modalContainer = document.getElementById('modal-container');
                 modalContainer.innerHTML = `
                     <div class="modal-content">
@@ -995,36 +1012,17 @@
                 document.getElementById('close-modal').onclick = () => modalContainer.style.display = 'none';
                 document.getElementById('new-user-form').onsubmit = async (e) => {
                     e.preventDefault();
-                    const submitBtn = e.target.querySelector('button[type="submit"]');
-                    const originalText = submitBtn.innerText;
-                    submitBtn.disabled = true;
-                    submitBtn.innerText = 'Procesando...';
-
                     const data = Object.fromEntries(new FormData(e.target));
 
-                    try {
-                        let result;
-                        if (id) {
-                            const updatedUser = { name: data.name, email: data.email };
-                            if (data.password) updatedUser.password = data.password;
-                            if (data.role) updatedUser.role = data.role;
-                            result = await Store.updateUser(id, updatedUser);
-                            alert('Usuario actualizado con éxito');
-                        } else {
-                            result = await Store.registerUser(data);
-                            if (result.success) {
-                                alert('Usuario creado con éxito');
-                            } else {
-                                throw new Error(result.message);
-                            }
-                        }
-                        modalContainer.style.display = 'none';
-                    } catch (error) {
-                        alert(`Error: ${error.message}`);
-                    } finally {
-                        submitBtn.disabled = false;
-                        submitBtn.innerText = originalText;
+                    if (id) {
+                        const updatedUser = { name: data.name, email: data.email };
+                        if (data.password) updatedUser.password = data.password;
+                        if (data.role) updatedUser.role = data.role;
+                        await Store.updateUser(id, updatedUser);
+                    } else {
+                        await Store.registerUser(data);
                     }
+                    modalContainer.style.display = 'none';
                 };
             }
         };
@@ -1036,7 +1034,6 @@
                 const clients = Store.state.clients;
                 const currentUser = Store.state.currentUser;
                 const canEditOrDelete = currentUser && currentUser.role !== 'Vendedor';
-                const isVendedor = currentUser && currentUser.role === 'Vendedor';
 
                 // Render structure first, then initialize table body
                 return `
@@ -1054,7 +1051,7 @@
                                 </thead>
                                 <tbody id="sales-table-body">
                                     ${sales.sort((a, b) => new Date(b.date) - new Date(a.date)).map(sale => {
-                    const client = clients.find(c => String(c.id) === String(sale.clientId));
+                    const client = clients.find(c => c.id === Number(sale.clientId));
                     return `
                                             <tr>
                                                 <td data-label="No. Venta">
@@ -1067,11 +1064,11 @@
                                                 <td data-label="Total Venta" style="font-weight: 700; color: var(--primary);">$${sale.grandTotal.toLocaleString()}</td>
                                                 <td data-label="Acciones">
                                                     <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                                                        <button class="btn-icon" title="Imprimir" onclick="SalesModule.printInvoice('${sale.id}')">🖨️</button>
-                                                        <button class="btn-icon" title="Etiqueta" onclick="SalesModule.printShippingLabel('${sale.id}')">📦</button>
-                                                        ${!isVendedor ? `
-                                                            <button class="btn-icon" onclick="SalesModule.showModal('${sale.id}')" title="Editar">✏️</button>
-                                                            <button class="btn-icon" onclick="SalesModule.deleteSale('${sale.id}')" title="Eliminar">🗑️</button>
+                                                        <button class="btn-icon" title="Imprimir" onclick="SalesModule.printInvoice(${sale.id})">🖨️</button>
+                                                        <button class="btn-icon" title="Etiqueta" onclick="SalesModule.printShippingLabel(${sale.id})">📦</button>
+                                                        ${canEditOrDelete ? `
+                                                            <button class="btn-icon" onclick="SalesModule.showModal(${sale.id})" title="Editar">✏️</button>
+                                                            <button class="btn-icon" onclick="SalesModule.deleteSale(${sale.id})" title="Eliminar">🗑️</button>
                                                         ` : ''}
                                                     </div>
                                                 </td>
@@ -1095,7 +1092,7 @@
                     alert('No tienes permisos para editar ventas.');
                     return;
                 }
-                const sale = id ? Store.state.sales.find(s => String(s.id) === String(id)) : null;
+                const sale = id ? Store.state.sales.find(s => s.id === Number(id)) : null;
                 const clients = Store.state.clients;
                 const modalContainer = document.getElementById('modal-container');
 
@@ -1190,10 +1187,6 @@
                 };
             },
             async deleteSale(id) {
-                if (Store.state.currentUser.role === 'Vendedor') {
-                    alert('No tienes permisos para eliminar ventas.');
-                    return;
-                }
                 if (confirm('¿Estás seguro de eliminar esta venta?')) {
                     await Store.deleteSale(id);
                 }
@@ -1285,8 +1278,8 @@
             },
 
             printShippingLabel(id) {
-                const sale = Store.state.sales.find(s => String(s.id) === String(id));
-                const client = Store.state.clients.find(c => String(c.id) === String(sale.clientId));
+                const sale = Store.state.sales.find(s => s.id === Number(id));
+                const client = Store.state.clients.find(c => c.id === Number(sale.clientId));
                 const printArea = document.getElementById('invoice-print-area');
 
                 printArea.innerHTML = `
@@ -1336,16 +1329,10 @@
         const AuthModule = {
             render() {
                 const hash = window.location.hash;
-                const hasUsers = Store.state.users.length > 0;
-
-                if (hash === '#register') {
-                    if (hasUsers) return this.renderLogin(); // Fallback if somehow reached
-                    return this.renderRegister();
-                }
+                if (hash === '#register') return this.renderRegister();
                 return this.renderLogin();
             },
             renderLogin() {
-                const hasUsers = Store.state.users.length > 0;
                 return `
                     <div class="auth-container fade-in">
                         <div class="auth-card">
@@ -1363,11 +1350,9 @@
                                 </div>
                                 <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:1rem;">Entrar</button>
                             </form>
-                            ${!hasUsers ? `
                             <div class="auth-footer" style="margin-top: 2rem;">
                                 <p>¿No tienes cuenta? <a href="#register" class="auth-link">Crear Administrador Maestro</a></p>
                             </div>
-                            ` : ''}
                         </div>
                     </div>
                 `;
@@ -1451,35 +1436,9 @@
             handleRoute() {
                 const hash = window.location.hash || '#dashboard';
                 const user = Store.state.currentUser;
-                const users = Store.state.users;
-                const hasUsers = users.length > 0;
-
-                // Wait for initial data load
-                if (Store.state.loading) {
-                    this.contentArea.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100vh;">Cargando sistema...</div>';
-                    return;
-                }
-
-                // If no user is logged in
-                if (!user) {
-                    // ... (existing guest logic)
-                    if (!hasUsers && hash !== '#register') { window.location.hash = '#register'; return; }
-                    if (hasUsers && hash === '#register') { window.location.hash = '#login'; return; }
-                    if (hasUsers && hash !== '#login') { window.location.hash = '#login'; return; }
-                } else {
-                    // Role based route protection
-                    if (['#users', '#settings'].includes(hash) && user.role === 'Vendedor') {
-                        window.location.hash = '#dashboard';
-                        return;
-                    }
-                    if (['#login', '#register'].includes(hash)) {
-                        window.location.hash = '#dashboard';
-                        return;
-                    }
-                }
-
-                Store.setRoute(hash);
-                this.render();
+                if (!user && !['#login', '#register'].includes(hash)) { window.location.hash = '#login'; return; }
+                if (user && ['#login', '#register'].includes(hash)) { window.location.hash = '#dashboard'; return; }
+                Store.setRoute(hash); this.render();
             },
             render() {
                 const hash = Store.state.currentRoute;
@@ -1493,8 +1452,7 @@
                 this.sidebar.style.display = 'flex';
                 document.querySelector('.main-content').style.marginLeft = (window.innerWidth > 900) ? '260px' : '0';
                 this.renderSidebar();
-                const isVendedor = user.role === 'Vendedor';
-                this.addBtn.style.display = ((hash === '#clients' && !isVendedor) || (hash === '#users' && user.role === 'Super Admin') || hash === '#sales') ? 'flex' : 'none';
+                this.addBtn.style.display = (hash === '#clients' || (hash === '#users' && user.role === 'Super Admin') || hash === '#sales') ? 'flex' : 'none';
                 this.addBtn.innerText = hash === '#clients' ? '+ Nuevo Cliente' : hash === '#users' ? '+ Nuevo Usuario' : '+ Nueva Venta';
 
                 switch (hash) {
@@ -1502,26 +1460,20 @@
                     case '#sales': this.pageTitle.innerText = 'Ventas'; this.contentArea.innerHTML = SalesModule.render(); SalesModule.init(); break;
                     case '#users': this.pageTitle.innerText = 'Usuarios'; this.contentArea.innerHTML = UserManagementModule.render(); UserManagementModule.init(); break;
                     case '#settings': this.pageTitle.innerText = 'Perfil'; this.renderSettings(); break;
-                    default:
-                        this.pageTitle.innerText = 'Dashboard';
-                        this.renderDashboard();
-                        const trigger = document.getElementById('yearly-summary-trigger');
-                        if (trigger) trigger.onclick = () => this.showYearlyDetail();
-                        break;
+                    default: this.pageTitle.innerText = 'Dashboard'; this.renderDashboard(); break;
                 }
             },
             renderSidebar() {
                 const user = Store.state.currentUser;
                 const hash = Store.state.currentRoute;
-                const isVendedor = user.role === 'Vendedor';
                 this.mainNav.innerHTML = `
                     <a href="#dashboard" class="nav-item ${hash === '#dashboard' ? 'active' : ''}"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
                     <a href="#clients" class="nav-item ${hash === '#clients' ? 'active' : ''}"><span class="nav-icon">👤</span><span class="nav-label">Clientes</span></a>
                     <a href="#sales" class="nav-item ${hash === '#sales' ? 'active' : ''}"><span class="nav-icon">💰</span><span class="nav-label">Ventas</span></a>
-                    ${!isVendedor ? `
+                    ${user.role === 'Super Admin' ? `
                         <a href="#users" class="nav-item ${hash === '#users' ? 'active' : ''}"><span class="nav-icon">👥</span><span class="nav-label">Usuarios</span></a>
-                        <a href="#settings" class="nav-item ${hash === '#settings' ? 'active' : ''}"><span class="nav-icon">⚙️</span><span class="nav-label">Perfil</span></a>
                     ` : ''}
+                    <a href="#settings" class="nav-item ${hash === '#settings' ? 'active' : ''}"><span class="nav-icon">⚙️</span><span class="nav-label">Perfil</span></a>
                     <a href="#" id="logout-btn" class="nav-item" style="margin-top: auto; color: var(--danger);"><span class="nav-icon">🚪</span><span class="nav-label">Cerrar Sesión</span></a>
         `;
 
@@ -1633,7 +1585,7 @@
                             <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Ventas del Mes ($)</div>
                             <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);">$${monthTotal.toLocaleString()}</div>
                         </div>
-                        <div class="card stat-card" id="yearly-summary-trigger" style="cursor: pointer; position: relative;">
+                        <div class="card stat-card" onclick="App.showYearlyDetail()" style="cursor: pointer; position: relative;">
                             <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Total Ventas Año (${currentYear})</div>
                             <div style="font-size: 1.8rem; font-weight: 700; color: var(--warning);">$${yearTotal.toLocaleString()}</div>
                             <div style="font-size: 0.7rem; color: var(--primary); margin-top: 0.5rem;">Ver detalle mensual →</div>
@@ -1666,7 +1618,7 @@
                 modalContainer.innerHTML = `
                     <div class="modal-content" style="width: 500px;">
                         <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Resumen Anual ${currentYear}</h2>
-                        <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                        <div class="table-container">
                             <table class="yearly-summary-table" style="width: 100%;">
                                 <thead>
                                     <tr>
@@ -1705,11 +1657,6 @@
         });
 
         document.addEventListener('DOMContentLoaded', () => App.init());
-
-        // Global exposing for debug/legacy inline handlers if necessary
-        window.ClientsModule = ClientsModule;
-        window.SalesModule = SalesModule;
-        window.App = App;
     </script>
 </body>
 
