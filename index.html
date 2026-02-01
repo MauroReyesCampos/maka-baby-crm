@@ -775,7 +775,7 @@
         const ClientsModule = {
             render() {
                 const clients = Store.state.clients;
-                const canEditOrDelete = Store.state.currentUser && Store.state.currentUser.role !== 'Vendedor';
+                const isVendedor = Store.state.currentUser && Store.state.currentUser.role === 'Vendedor';
                 return `
                     <div class="card fade-in">
                         <div class="table-container">
@@ -783,24 +783,24 @@
                                 <thead>
                                     <tr>
                                         <th>Nombre/Razon Social</th>
-                                        <th>Dirección</th>
-                                        <th>Complemento</th>
+                                        <th>Cedula/NIT</th>
                                         <th>Telefono</th>
-                                        <th>Acciones</th>
+                                        <th>Ciudad</th>
+                                        <th style="text-align: right;">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${clients.length > 0 ? clients.map(client => `
                                         <tr>
                                             <td data-label="Nombre"><div style="font-weight: 600;">${client.name}</div></td>
-                                            <td data-label="NIT/Cédula">${client.nit}</td>
+                                            <td data-label="Cedula/NIT">${client.nit}</td>
                                             <td data-label="Teléfono">${client.phone}</td>
                                             <td data-label="Ciudad">${client.city}</td>
                                             <td data-label="Acciones">
                                                 <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                                                    ${canEditOrDelete ? `
-                                                        <button class="btn-icon" onclick="ClientsModule.showModal(${client.id})" title="Editar">✏️</button>
-                                                        <button class="btn-icon" onclick="ClientsModule.deleteClient(${client.id})" title="Eliminar">🗑️</button>
+                                                    ${!isVendedor ? `
+                                                        <button class="btn-icon" onclick="ClientsModule.showModal('${client.id}')" title="Editar">✏️</button>
+                                                        <button class="btn-icon" onclick="ClientsModule.deleteClient('${client.id}')" title="Eliminar">🗑️</button>
                                                     ` : '<span style="color: var(--text-muted); font-size: 0.8rem;">Solo lectura</span>'}
                                                 </div>
                                             </td>
@@ -813,24 +813,15 @@
                 `;
             },
             init() {
-                // No need for contentArea.onclick listener as actions are now direct onclicks
                 const addBtn = document.getElementById('add-btn');
-                if (addBtn) {
-                    addBtn.onclick = () => {
-                        if (Store.state.currentUser && Store.state.currentUser.role === 'Vendedor') {
-                            alert('No tienes permisos para añadir clientes.');
-                            return;
-                        }
-                        this.showModal();
-                    };
-                }
+                if (addBtn) addBtn.onclick = () => this.showModal();
             },
             showModal(id = null) {
                 if (Store.state.currentUser && Store.state.currentUser.role === 'Vendedor') {
-                    alert('No tienes permisos para editar clientes.');
+                    alert('No tienes permisos.');
                     return;
                 }
-                const client = id ? Store.state.clients.find(c => c.id === Number(id)) : {
+                const client = id ? Store.state.clients.find(c => String(c.id) === String(id)) : {
                     name: '', nit: '', phone: '', address: '', complement: '', neighborhood: '', city: '', state: ''
                 };
                 const modalContainer = document.getElementById('modal-container');
@@ -897,13 +888,9 @@
                 phoneInput.addEventListener('input', (e) => {
                     let value = e.target.value.replace(/\D/g, '');
                     if (value.length > 0) {
-                        if (value.length <= 3) {
-                            value = `(${value}`;
-                        } else if (value.length <= 10) {
-                            value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
-                        } else {
-                            value = `(${value.slice(0, 3)}) ${value.slice(3, 10)}`;
-                        }
+                        if (value.length <= 3) { value = `(${value}`; }
+                        else if (value.length <= 10) { value = `(${value.slice(0, 3)}) ${value.slice(3)}`; }
+                        else { value = `(${value.slice(0, 3)}) ${value.slice(3, 10)}`; }
                     }
                     e.target.value = value;
                 });
@@ -919,7 +906,7 @@
             },
             async deleteClient(id) {
                 if (Store.state.currentUser && Store.state.currentUser.role === 'Vendedor') {
-                    alert('No tienes permisos para eliminar clientes.');
+                    alert('No tienes permisos.');
                     return;
                 }
                 if (confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
@@ -1051,7 +1038,7 @@
                                 </thead>
                                 <tbody id="sales-table-body">
                                     ${sales.sort((a, b) => new Date(b.date) - new Date(a.date)).map(sale => {
-                    const client = clients.find(c => c.id === Number(sale.clientId));
+                    const client = clients.find(c => String(c.id) === String(sale.clientId));
                     return `
                                             <tr>
                                                 <td data-label="No. Venta">
@@ -1064,11 +1051,11 @@
                                                 <td data-label="Total Venta" style="font-weight: 700; color: var(--primary);">$${sale.grandTotal.toLocaleString()}</td>
                                                 <td data-label="Acciones">
                                                     <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                                                        <button class="btn-icon" title="Imprimir" onclick="SalesModule.printInvoice(${sale.id})">🖨️</button>
-                                                        <button class="btn-icon" title="Etiqueta" onclick="SalesModule.printShippingLabel(${sale.id})">📦</button>
-                                                        ${canEditOrDelete ? `
-                                                            <button class="btn-icon" onclick="SalesModule.showModal(${sale.id})" title="Editar">✏️</button>
-                                                            <button class="btn-icon" onclick="SalesModule.deleteSale(${sale.id})" title="Eliminar">🗑️</button>
+                                                        <button class="btn-icon" title="Imprimir" onclick="SalesModule.printInvoice('${sale.id}')">🖨️</button>
+                                                        <button class="btn-icon" title="Etiqueta" onclick="SalesModule.printShippingLabel('${sale.id}')">📦</button>
+                                                        ${!isVendedor ? `
+                                                            <button class="btn-icon" onclick="SalesModule.showModal('${sale.id}')" title="Editar">✏️</button>
+                                                            <button class="btn-icon" onclick="SalesModule.deleteSale('${sale.id}')" title="Eliminar">🗑️</button>
                                                         ` : ''}
                                                     </div>
                                                 </td>
@@ -1092,7 +1079,7 @@
                     alert('No tienes permisos para editar ventas.');
                     return;
                 }
-                const sale = id ? Store.state.sales.find(s => s.id === Number(id)) : null;
+                const sale = id ? Store.state.sales.find(s => String(s.id) === String(id)) : null;
                 const clients = Store.state.clients;
                 const modalContainer = document.getElementById('modal-container');
 
@@ -1187,6 +1174,10 @@
                 };
             },
             async deleteSale(id) {
+                if (Store.state.currentUser.role === 'Vendedor') {
+                    alert('No tienes permisos para eliminar ventas.');
+                    return;
+                }
                 if (confirm('¿Estás seguro de eliminar esta venta?')) {
                     await Store.deleteSale(id);
                 }
@@ -1455,25 +1446,20 @@
 
                 // If no user is logged in
                 if (!user) {
-                    // If no users exist in the system, redirect to register
-                    if (!hasUsers && hash !== '#register') {
-                        window.location.hash = '#register';
+                    // ... (existing guest logic)
+                    if (!hasUsers && hash !== '#register') { window.location.hash = '#register'; return; }
+                    if (hasUsers && hash === '#register') { window.location.hash = '#login'; return; }
+                    if (hasUsers && hash !== '#login') { window.location.hash = '#login'; return; }
+                } else {
+                    // Role based route protection
+                    if (hash === '#users' && user.role === 'Vendedor') {
+                        window.location.hash = '#dashboard';
                         return;
                     }
-                    // CRITICAL: If users exist, BLOQUED PUBLIC REGISTRATION
-                    if (hasUsers && hash === '#register') {
-                        window.location.hash = '#login';
+                    if (['#login', '#register'].includes(hash)) {
+                        window.location.hash = '#dashboard';
                         return;
                     }
-                    // If users exist but not logged in, redirect to login unless on login
-                    if (hasUsers && hash !== '#login') {
-                        window.location.hash = '#login';
-                        return;
-                    }
-                } else if (['#login', '#register'].includes(hash)) {
-                    // If user is logged in and tries to access auth pages, redirect to dashboard
-                    window.location.hash = '#dashboard';
-                    return;
                 }
 
                 Store.setRoute(hash);
@@ -1491,7 +1477,8 @@
                 this.sidebar.style.display = 'flex';
                 document.querySelector('.main-content').style.marginLeft = (window.innerWidth > 900) ? '260px' : '0';
                 this.renderSidebar();
-                this.addBtn.style.display = (hash === '#clients' || (hash === '#users' && user.role === 'Super Admin') || hash === '#sales') ? 'flex' : 'none';
+                const isVendedor = user.role === 'Vendedor';
+                this.addBtn.style.display = ((hash === '#clients' && !isVendedor) || (hash === '#users' && user.role === 'Super Admin') || hash === '#sales') ? 'flex' : 'none';
                 this.addBtn.innerText = hash === '#clients' ? '+ Nuevo Cliente' : hash === '#users' ? '+ Nuevo Usuario' : '+ Nueva Venta';
 
                 switch (hash) {
@@ -1505,11 +1492,12 @@
             renderSidebar() {
                 const user = Store.state.currentUser;
                 const hash = Store.state.currentRoute;
+                const isVendedor = user.role === 'Vendedor';
                 this.mainNav.innerHTML = `
                     <a href="#dashboard" class="nav-item ${hash === '#dashboard' ? 'active' : ''}"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
                     <a href="#clients" class="nav-item ${hash === '#clients' ? 'active' : ''}"><span class="nav-icon">👤</span><span class="nav-label">Clientes</span></a>
                     <a href="#sales" class="nav-item ${hash === '#sales' ? 'active' : ''}"><span class="nav-icon">💰</span><span class="nav-label">Ventas</span></a>
-                    ${user.role === 'Super Admin' ? `
+                    ${!isVendedor ? `
                         <a href="#users" class="nav-item ${hash === '#users' ? 'active' : ''}"><span class="nav-icon">👥</span><span class="nav-label">Usuarios</span></a>
                     ` : ''}
                     <a href="#settings" class="nav-item ${hash === '#settings' ? 'active' : ''}"><span class="nav-icon">⚙️</span><span class="nav-label">Perfil</span></a>

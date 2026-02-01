@@ -87,15 +87,18 @@ export const Store = {
 
     // Client Methods
     async addClient(client) {
+        if (this.state.currentUser.role === 'Vendedor') throw new Error("Acceso denegado");
         await addDoc(collection(db, "clients"), client);
     },
 
     async updateClient(id, updatedClient) {
+        if (this.state.currentUser.role === 'Vendedor') throw new Error("Acceso denegado");
         const clientRef = doc(db, "clients", id);
         await updateDoc(clientRef, updatedClient);
     },
 
     async deleteClient(id) {
+        if (this.state.currentUser.role === 'Vendedor') throw new Error("Acceso denegado");
         await deleteDoc(doc(db, "clients", id));
     },
 
@@ -123,11 +126,13 @@ export const Store = {
     },
 
     async updateSale(id, updatedData) {
+        if (this.state.currentUser.role === 'Vendedor') throw new Error("Acceso denegado");
         const saleRef = doc(db, "sales", id);
         await updateDoc(saleRef, updatedData);
     },
 
     async deleteSale(id) {
+        if (this.state.currentUser.role === 'Vendedor') throw new Error("Acceso denegado");
         await deleteDoc(doc(db, "sales", id));
     },
 
