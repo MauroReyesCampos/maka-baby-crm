@@ -56,38 +56,19 @@ export const Store = {
         });
 
         // Listen for Auth changes
-        onAuthStateChanged(auth, async (user) => {
+        onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Fetch user data from Firestore to get the correct role
-                try {
-                    const q = query(collection(db, "users"), where("uid", "==", user.uid));
-                    const querySnapshot = await getDocs(q);
+                // Find user role from the already-loaded users array
+                const userDoc = this.state.users.find(u => u.uid === user.uid);
+                const role = userDoc ? userDoc.role : 'Admin';
 
-                    let role = 'Admin'; // Default
-                    let userData = null;
-
-                    if (!querySnapshot.empty) {
-                        userData = querySnapshot.docs[0].data();
-                        role = userData.role || 'Admin';
-                    }
-
-                    this.state.currentUser = {
-                        uid: user.uid,
-                        name: user.displayName || user.email.split('@')[0],
-                        email: user.email,
-                        role: role
-                    };
-                } catch (error) {
-                    console.error("Error fetching user role:", error);
-                    // Fallback to minimal data if Firestore fails
-                    this.state.currentUser = {
-                        uid: user.uid,
-                        name: user.displayName || user.email.split('@')[0],
-                        email: user.email,
-                        role: 'Admin'
-                    };
-                }
-                this.notify(); // Notify UI after setting currentUser
+                this.state.currentUser = {
+                    uid: user.uid,
+                    name: user.displayName || user.email.split('@')[0],
+                    email: user.email,
+                    role: role
+                };
+                this.notify();
                 this.initDataListeners();
             } else {
                 this.state.currentUser = null;
