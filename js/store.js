@@ -8,7 +8,9 @@ import {
     setDoc,
     getDoc,
     onSnapshot,
+    onSnapshot,
     query,
+    where,
     getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
@@ -201,6 +203,15 @@ export const Store = {
     // User Management Methods (Firestore based)
     async registerUser(userData) {
         try {
+            // Check if trying to create a Super Admin and if one already exists
+            if (userData.role === 'Super Admin') {
+                const q = query(collection(db, "users"), where("role", "==", "Super Admin"));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    return { success: false, message: 'Ya existe un Super Administrador. No se puede crear otro.' };
+                }
+            }
+
             // 1. Create the account in Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
             const user = userCredential.user;
