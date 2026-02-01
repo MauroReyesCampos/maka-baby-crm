@@ -3,6 +3,7 @@ import { Store } from './store.js';
 export const ClientsModule = {
     render() {
         const clients = Store.state.clients;
+        const canEditOrDelete = Store.state.currentUser && Store.state.currentUser.role !== 'Vendedor';
 
         return `
             <div class="card fade-in">
@@ -10,30 +11,26 @@ export const ClientsModule = {
                     <table>
                         <thead>
                             <tr>
-                                <th>Nombre</th>
-                                <th>Email</th>
-                                <th>Teléfono</th>
-                                <th>Estado</th>
+                                <th>Nombre/Razon Social</th>
+                                <th>Dirección</th>
+                                <th>Complemento</th>
+                                <th>Telefono</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${clients.length > 0 ? clients.map(client => `
                                 <tr>
-                                    <td>
-                                        <div style="font-weight: 600;">${client.name}</div>
-                                    </td>
-                                    <td>${client.email}</td>
-                                    <td>${client.phone}</td>
-                                    <td>
-                                        <span class="status-badge ${client.status === 'Activo' ? 'status-active' : 'status-inactive'}">
-                                            ${client.status}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div style="display: flex; gap: 10px;">
-                                            <button class="btn-icon edit-client" data-id="${client.id}" title="Editar">✏️</button>
-                                            <button class="btn-icon delete-client" data-id="${client.id}" title="Eliminar">🗑️</button>
+                                    <td data-label="Nombre"><div style="font-weight: 600;">${client.name}</div></td>
+                                    <td data-label="Dirección">${client.address || ''}</td>
+                                    <td data-label="Complemento">${client.complement || ''}</td>
+                                    <td data-label="Teléfono">${client.phone}</td>
+                                    <td data-label="Acciones">
+                                        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                            ${canEditOrDelete ? `
+                                                <button class="btn-icon edit-client" data-id="${client.id}" title="Editar">✏️</button>
+                                                <button class="btn-icon delete-client" data-id="${client.id}" title="Eliminar">🗑️</button>
+                                            ` : '<span style="color: var(--text-muted); font-size: 0.8rem;">Solo lectura</span>'}
                                         </div>
                                     </td>
                                 </tr>
@@ -47,6 +44,16 @@ export const ClientsModule = {
 
     init() {
         this.attachEventListeners();
+        const addBtn = document.getElementById('add-btn');
+        if (addBtn) {
+            addBtn.onclick = () => {
+                if (Store.state.currentUser && Store.state.currentUser.role === 'Vendedor') {
+                    alert('No tienes permisos para añadir clientes.');
+                    return;
+                }
+                this.showModal();
+            };
+        }
     },
 
     attachEventListeners() {
@@ -57,52 +64,77 @@ export const ClientsModule = {
             const deleteBtn = e.target.closest('.delete-client');
 
             if (editBtn) {
-                const id = parseInt(editBtn.dataset.id);
+                const id = (editBtn.dataset.id); // Keeping string id
                 this.showModal(id);
             }
 
             if (deleteBtn) {
-                const id = parseInt(deleteBtn.dataset.id);
-                if (confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
-                    Store.deleteClient(id);
-                }
+                const id = (deleteBtn.dataset.id);
+                this.deleteClient(id);
             }
         };
+    },
 
-        const addBtn = document.getElementById('add-btn');
-        if (addBtn) {
-            addBtn.onclick = () => this.showModal();
+    async deleteClient(id) {
+        if (Store.state.currentUser && Store.state.currentUser.role === 'Vendedor') {
+            alert('No tienes permisos para eliminar clientes.');
+            return;
+        }
+        if (confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
+            await Store.deleteClient(id);
         }
     },
 
     showModal(id = null) {
-        const client = id ? Store.state.clients.find(c => c.id === id) : { name: '', email: '', phone: '', status: 'Activo' };
+        if (Store.state.currentUser && Store.state.currentUser.role === 'Vendedor') {
+            alert('No tienes permisos para editar clientes.');
+            return;
+        }
+
+        const client = id ? Store.state.clients.find(c => c.id === id) : {
+            name: '', nit: '', phone: '', address: '', complement: '', neighborhood: '', city: '', state: ''
+        };
         const modalContainer = document.getElementById('modal-container');
 
         modalContainer.innerHTML = `
-            <div class="modal-content">
-                <h2 style="margin-bottom: 1.5rem;">${id ? 'Editar Cliente' : 'Nuevo Cliente'}</h2>
+            <div class="modal-content" style="width: 600px; max-height: 90vh; overflow-y: auto;">
+                <h2 style="margin-bottom: 1.5rem; color: var(--primary);">${id ? 'Editar Cliente' : 'Nuevo Cliente'}</h2>
                 <form id="client-form">
-                    <div class="form-group">
-                        <label>Nombre Completo</label>
-                        <input type="text" class="form-control" name="name" value="${client.name}" required>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label>Nombre/Razon Social</label>
+                            <input type="text" class="form-control" name="name" value="${client.name}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Cedula/NIT</label>
+                            <input type="text" class="form-control" name="nit" id="nit-input" value="${client.nit}" placeholder="Ej: 900.123.456" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Telefono</label>
+                            <input type="text" class="form-control" name="phone" id="phone-input" value="${client.phone}" placeholder="Ej: (310) 1234567" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Dirección</label>
+                            <input type="text" class="form-control" name="address" value="${client.address}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Complemento</label>
+                            <input type="text" class="form-control" name="complement" value="${client.complement || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Barrio</label>
+                            <input type="text" class="form-control" name="neighborhood" value="${client.neighborhood}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Ciudad</label>
+                            <input type="text" class="form-control" name="city" value="${client.city}" required>
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label>Departamento</label>
+                            <input type="text" class="form-control" name="state" value="${client.state}" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Correo Electrónico</label>
-                        <input type="email" class="form-control" name="email" value="${client.email}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Teléfono</label>
-                        <input type="text" class="form-control" name="phone" value="${client.phone}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Estado</label>
-                        <select class="form-control" name="status">
-                            <option value="Activo" ${client.status === 'Activo' ? 'selected' : ''}>Activo</option>
-                            <option value="Inactivo" ${client.status === 'Inactivo' ? 'selected' : ''}>Inactivo</option>
-                        </select>
-                    </div>
-                    <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                    <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; position: sticky; bottom: 0; background: white; padding-top: 1rem;">
                         <button type="button" class="btn btn-ghost" id="close-modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary">${id ? 'Guardar Cambios' : 'Crear Cliente'}</button>
                     </div>
@@ -116,15 +148,40 @@ export const ClientsModule = {
             modalContainer.style.display = 'none';
         };
 
-        document.getElementById('client-form').onsubmit = (e) => {
+        const nitInput = document.getElementById('nit-input');
+        const phoneInput = document.getElementById('phone-input');
+
+        nitInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value) {
+                value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            }
+            e.target.value = value;
+        });
+
+        phoneInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 0) {
+                if (value.length <= 3) {
+                    value = `(${value}`;
+                } else if (value.length <= 10) {
+                    value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+                } else {
+                    value = `(${value.slice(0, 3)}) ${value.slice(3, 10)}`;
+                }
+            }
+            e.target.value = value;
+        });
+
+        document.getElementById('client-form').onsubmit = async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
             const clientData = Object.fromEntries(formData.entries());
 
             if (id) {
-                Store.updateClient(id, clientData);
+                await Store.updateClient(id, clientData);
             } else {
-                Store.addClient(clientData);
+                await Store.addClient(clientData);
             }
             modalContainer.style.display = 'none';
         };

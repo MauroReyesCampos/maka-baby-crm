@@ -5,6 +5,7 @@ import {
     updateDoc,
     deleteDoc,
     doc,
+    getDoc,
     onSnapshot,
     query,
     getDocs
@@ -40,13 +41,23 @@ export const Store = {
 
     init() {
         // Listen for Auth changes
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
+                let role = 'Vendedor'; // Default role
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists()) {
+                        role = userDoc.data().role;
+                    }
+                } catch (e) {
+                    console.error("Error fetching user role:", e);
+                }
+
                 this.state.currentUser = {
                     uid: user.uid,
                     name: user.displayName || user.email.split('@')[0],
                     email: user.email,
-                    role: 'Super Admin' // Default for now, should be fetched from a user doc
+                    role: role
                 };
                 this.initDataListeners();
             } else {
@@ -122,7 +133,13 @@ export const Store = {
     },
 
     async deleteSale(id) {
-        await deleteDoc(doc(db, "sales", id));
+        try {
+            await deleteDoc(doc(db, "sales", id));
+            return { success: true };
+        } catch (error) {
+            console.error("Error deleting sale:", error);
+            return { success: false, message: error.message };
+        }
     },
 
     // Auth Methods
