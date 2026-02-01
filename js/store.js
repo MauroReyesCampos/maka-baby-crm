@@ -6,7 +6,8 @@ import {
     deleteDoc,
     doc,
     onSnapshot,
-    query
+    query,
+    getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
     signInWithEmailAndPassword,
@@ -69,6 +70,12 @@ export const Store = {
             this.state.sales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             this.notify();
         });
+
+        // Listen for Users
+        onSnapshot(collection(db, "users"), (snapshot) => {
+            this.state.users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            this.notify();
+        });
     },
 
     // Client Methods
@@ -83,6 +90,38 @@ export const Store = {
 
     async deleteClient(id) {
         await deleteDoc(doc(db, "clients", id));
+    },
+
+    // Sale Methods
+    async addSale(saleData) {
+        const year = new Date().getFullYear();
+        // Generar SaleNumber secuencial (opcional: se puede hacer más robusto)
+        const yearSales = this.state.sales.filter(s => s.saleNumber && s.saleNumber.startsWith(year.toString()));
+        let nextNum = 1;
+        if (yearSales.length > 0) {
+            const lastNum = Math.max(...yearSales.map(s => {
+                const parts = s.saleNumber.split('-');
+                return parts.length > 1 ? parseInt(parts[1]) : 0;
+            }));
+            nextNum = lastNum + 1;
+        }
+        const saleNumber = `${year}-${nextNum.toString().padStart(3, '0')}`;
+
+        const newSale = {
+            ...saleData,
+            saleNumber,
+            date: new Date().toISOString()
+        };
+        await addDoc(collection(db, "sales"), newSale);
+    },
+
+    async updateSale(id, updatedData) {
+        const saleRef = doc(db, "sales", id);
+        await updateDoc(saleRef, updatedData);
+    },
+
+    async deleteSale(id) {
+        await deleteDoc(doc(db, "sales", id));
     },
 
     // Auth Methods
@@ -115,6 +154,46 @@ export const Store = {
     setRoute(route) {
         this.state.currentRoute = route;
         this.notify();
+    },
+
+    async wipeAllData() {
+        try {
+            // Clear Clients
+            const clientsSnapshot = await getDocs(collection(db, "clients"));
+            const clientDeletions = clientsSnapshot.docs.map(d => deleteDoc(doc(db, "clients", d.id)));
+
+            // Clear Sales
+            const salesSnapshot = await getDocs(collection(db, "sales"));
+            const salesDeletions = salesSnapshot.docs.map(d => deleteDoc(doc(db, "sales", d.id)));
+
+            await Promise.all([...clientDeletions, ...salesDeletions]);
+
+            // Clear LocalStorage
+            localStorage.clear();
+
+            console.log('Toda la información ha sido eliminada.');
+            return { success: true };
+        } catch (error) {
+            console.error("Error al borrar datos:", error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    // User Management Methods (Firestore based)
+    async registerUser(userData) {
+        await addDoc(collection(db, "users"), {
+            ...userData,
+            createdAt: new Date().toISOString()
+        });
+    },
+
+    async updateUser(id, updatedData) {
+        const userRef = doc(db, "users", id);
+        await updateDoc(userRef, updatedData);
+    },
+
+    async deleteUser(id) {
+        await deleteDoc(doc(db, "users", id));
     }
 };
 

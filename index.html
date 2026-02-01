@@ -767,170 +767,9 @@
 
     <div id="modal-container" class="modal-overlay" style="display: none;"></div>
 
-    <script>
-        // Store Management
-        const Store = {
-            state: {
-                clients: JSON.parse(localStorage.getItem('makabc_clients')) || [],
-                users: JSON.parse(localStorage.getItem('makabc_users')) || [],
-                currentUser: JSON.parse(localStorage.getItem('makabc_session')) || null,
-                sales: JSON.parse(localStorage.getItem('makabc_sales')) || [],
-                currentRoute: window.location.hash || '#dashboard'
-            },
-            listeners: [],
-            subscribe(callback) { this.listeners.push(callback); },
-            notify() { this.listeners.forEach(callback => callback(this.state)); },
+    <script type="module">
+        import { Store } from './js/store.js';
 
-            // Client Methods
-            setClients(clients) {
-                this.state.clients = clients;
-                localStorage.setItem('makabc_clients', JSON.stringify(clients));
-                this.notify();
-            },
-            addClient(client) {
-                const newClient = { ...client, id: Date.now() };
-                this.setClients([...this.state.clients, newClient]);
-            },
-            updateClient(id, updatedClient) {
-                const clients = this.state.clients.map(c => c.id === Number(id) ? { ...c, ...updatedClient } : c);
-                this.setClients(clients);
-            },
-            deleteClient(id) {
-                const clients = this.state.clients.filter(c => c.id !== Number(id));
-                this.setClients(clients);
-            },
-
-            // User Methods
-            registerUser(userData) {
-                const userId = Date.now();
-                const newUser = {
-                    ...userData,
-                    id: userId,
-                    email: String(userData.email).toLowerCase().trim(),
-                    password: String(userData.password).trim()
-                };
-                this.state.users.push(newUser);
-                localStorage.setItem('makabc_users', JSON.stringify(this.state.users));
-                this.notify();
-                return newUser;
-            },
-            login(email, password) {
-                if (!email || !password) return { success: false, message: 'Ingrese correo y contraseña.' };
-                const cleanEmail = String(email).toLowerCase().trim();
-                const cleanPassword = String(password).trim();
-
-                const user = (this.state.users || []).find(u =>
-                    u && u.email && String(u.email).toLowerCase().trim() === cleanEmail
-                );
-
-                if (!user) {
-                    return { success: false, message: 'Correo no registrado.' };
-                }
-
-                if (String(user.password).trim() !== cleanPassword) {
-                    return { success: false, message: 'Contraseña incorrecta.' };
-                }
-
-                this.state.currentUser = user;
-                localStorage.setItem('makabc_session', JSON.stringify(user));
-                this.notify();
-                return { success: true };
-            },
-            updateCurrentUser(updatedData) {
-                const userIndex = this.state.users.findIndex(u => u.id === this.state.currentUser.id);
-                if (userIndex !== -1) {
-                    const updatedUser = { ...this.state.users[userIndex], ...updatedData };
-                    this.state.users[userIndex] = updatedUser;
-                    this.state.currentUser = updatedUser;
-                    localStorage.setItem('makabc_users', JSON.stringify(this.state.users));
-                    localStorage.setItem('makabc_session', JSON.stringify(updatedUser));
-                    this.notify();
-                    return true;
-                }
-                return false;
-            },
-            updateUser(id, updatedData) {
-                const userIndex = this.state.users.findIndex(u => u.id === Number(id));
-                if (userIndex !== -1) {
-                    const updatedUser = { ...this.state.users[userIndex], ...updatedData };
-                    this.state.users[userIndex] = updatedUser;
-
-                    // If updating self, also update session
-                    if (this.state.currentUser && this.state.currentUser.id === Number(id)) {
-                        this.state.currentUser = updatedUser;
-                        localStorage.setItem('makabc_session', JSON.stringify(updatedUser));
-                    }
-
-                    localStorage.setItem('makabc_users', JSON.stringify(this.state.users));
-                    this.notify();
-                    return true;
-                }
-                return false;
-            },
-            deleteUser(id) {
-                const users = this.state.users.filter(u => u.id !== Number(id));
-                this.state.users = users;
-                localStorage.setItem('makabc_users', JSON.stringify(users));
-
-                // If deleting self (unlikely but handled), logout
-                if (this.state.currentUser && this.state.currentUser.id === Number(id)) {
-                    this.logout();
-                } else {
-                    this.notify();
-                }
-            },
-            logout() {
-                this.state.currentUser = null;
-                localStorage.removeItem('makabc_session');
-                this.notify();
-            },
-            setRoute(route) {
-                this.state.currentRoute = route;
-                this.notify();
-            },
-
-            // Sales Methods
-            addSale(saleData) {
-                const year = new Date().getFullYear();
-                const yearSales = this.state.sales.filter(s => s.saleNumber && s.saleNumber.startsWith(year.toString()));
-
-                let nextNum = 1;
-                if (yearSales.length > 0) {
-                    const lastNum = Math.max(...yearSales.map(s => {
-                        const parts = s.saleNumber.split('-');
-                        return parts.length > 1 ? parseInt(parts[1]) : 0;
-                    }));
-                    nextNum = lastNum + 1;
-                }
-
-                const saleNumber = `${year}-${nextNum.toString().padStart(3, '0')}`;
-
-                const newSale = {
-                    ...saleData,
-                    id: Date.now(),
-                    saleNumber,
-                    date: new Date().toISOString()
-                };
-                this.state.sales.push(newSale);
-                localStorage.setItem('makabc_sales', JSON.stringify(this.state.sales));
-                this.notify();
-            },
-            updateSale(id, updatedData) {
-                const saleIndex = this.state.sales.findIndex(s => s.id === Number(id));
-                if (saleIndex !== -1) {
-                    this.state.sales[saleIndex] = { ...this.state.sales[saleIndex], ...updatedData };
-                    localStorage.setItem('makabc_sales', JSON.stringify(this.state.sales));
-                    this.notify();
-                    return true;
-                }
-                return false;
-            },
-            deleteSale(id) {
-                this.state.sales = this.state.sales.filter(s => s.id !== Number(id));
-                localStorage.setItem('makabc_sales', JSON.stringify(this.state.sales));
-                this.notify();
-            }
-        };
 
         // Clients Module
         const ClientsModule = {
@@ -1069,22 +908,22 @@
                     e.target.value = value;
                 });
 
-                document.getElementById('client-form').onsubmit = (e) => {
+                document.getElementById('client-form').onsubmit = async (e) => {
                     e.preventDefault();
                     const formData = new FormData(e.target);
                     const clientData = Object.fromEntries(formData.entries());
-                    if (id) Store.updateClient(id, clientData);
-                    else Store.addClient(clientData);
+                    if (id) await Store.updateClient(id, clientData);
+                    else await Store.addClient(clientData);
                     modalContainer.style.display = 'none';
                 };
             },
-            deleteClient(id) {
+            async deleteClient(id) {
                 if (Store.state.currentUser && Store.state.currentUser.role === 'Vendedor') {
                     alert('No tienes permisos para eliminar clientes.');
                     return;
                 }
                 if (confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
-                    Store.deleteClient(id);
+                    await Store.deleteClient(id);
                 }
             }
         };
@@ -1127,13 +966,13 @@
             },
             init() {
                 const contentArea = document.getElementById('content-area');
-                contentArea.onclick = (e) => {
+                contentArea.onclick = async (e) => {
                     const deleteBtn = e.target.closest('.delete-user');
                     const editBtn = e.target.closest('.edit-user');
 
                     if (deleteBtn) {
                         if (confirm('¿Estás seguro de eliminar este usuario?')) {
-                            Store.deleteUser(deleteBtn.dataset.id);
+                            await Store.deleteUser(deleteBtn.dataset.id);
                         }
                     }
 
@@ -1145,7 +984,7 @@
                 if (addBtn) addBtn.onclick = () => this.showModal();
             },
             showModal(id = null) {
-                const user = id ? Store.state.users.find(u => u.id === Number(id)) : { name: '', email: '', password: '', role: 'Admin' };
+                const user = id ? Store.state.users.find(u => u.id === id) : { name: '', email: '', password: '', role: 'Admin' };
                 const modalContainer = document.getElementById('modal-container');
                 modalContainer.innerHTML = `
                     <div class="modal-content">
@@ -1171,17 +1010,17 @@
                 `;
                 modalContainer.style.display = 'flex';
                 document.getElementById('close-modal').onclick = () => modalContainer.style.display = 'none';
-                document.getElementById('new-user-form').onsubmit = (e) => {
+                document.getElementById('new-user-form').onsubmit = async (e) => {
                     e.preventDefault();
                     const data = Object.fromEntries(new FormData(e.target));
 
                     if (id) {
                         const updatedUser = { name: data.name, email: data.email };
                         if (data.password) updatedUser.password = data.password;
-                        if (data.role) updatedUser.role = data.role; // Role can be updated unless it's Super Admin
-                        Store.updateUser(id, updatedUser);
+                        if (data.role) updatedUser.role = data.role;
+                        await Store.updateUser(id, updatedUser);
                     } else {
-                        Store.registerUser(data);
+                        await Store.registerUser(data);
                     }
                     modalContainer.style.display = 'none';
                 };
@@ -1325,7 +1164,7 @@
                 document.getElementById('add-item-row').onclick = () => addRow();
                 document.getElementById('close-modal').onclick = () => modalContainer.style.display = 'none';
 
-                document.getElementById('sales-form').onsubmit = (e) => {
+                document.getElementById('sales-form').onsubmit = async (e) => {
                     e.preventDefault();
                     const formData = new FormData(e.target);
                     const clientId = formData.get('clientId');
@@ -1342,10 +1181,15 @@
                     });
                     const grandTotal = items.reduce((sum, item) => sum + item.total, 0);
 
-                    if (id) Store.updateSale(id, { clientId, items, grandTotal });
-                    else Store.addSale({ clientId, items, grandTotal });
+                    if (id) await Store.updateSale(id, { clientId, items, grandTotal });
+                    else await Store.addSale({ clientId, items, grandTotal });
                     modalContainer.style.display = 'none';
                 };
+            },
+            async deleteSale(id) {
+                if (confirm('¿Estás seguro de eliminar esta venta?')) {
+                    await Store.deleteSale(id);
+                }
             },
 
             bindRowEvents(row) {
@@ -1484,17 +1328,12 @@
         // Auth Module
         const AuthModule = {
             render() {
-                const hash = Store.state.currentRoute;
-                if (hash === '#register') return this.renderRegister();
-                return this.renderLogin();
-            },
-            renderLogin() {
-                const userCount = (Store.state.users || []).length;
                 return `
                     <div class="auth-container fade-in">
                         <div class="auth-card">
                             <img src="logo.png" class="auth-logo" alt="Logo">
                             <h2 class="auth-title">Bienvenido</h2>
+                            <p class="auth-subtitle">Inicie sesión para acceder a su CRM</p>
                             <form id="login-form">
                                 <div class="form-group">
                                     <label>Correo Electrónico</label>
@@ -1506,88 +1345,27 @@
                                 </div>
                                 <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:1rem;">Entrar</button>
                             </form>
-                            <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted); text-align: center; border-top: 1px solid var(--border); padding-top: 0.5rem;">
-                                Estado del Sistema: ${userCount === 0 ? '<span style="color: var(--danger);">Sin usuarios</span>' : `<span>${userCount} usuario(s) registrado(s)</span>`}
+                            <div style="margin-top: 2rem; font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+                                <p>¿Problemas para entrar? Contacte al administrador.</p>
                             </div>
-                            ${!Store.state.users.some(u => u.role === 'Super Admin') ? `
-                                <div class="auth-footer">
-                                    <a href="#register" class="auth-link">Registrar Super Admin Inicial</a>
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-            },
-            renderRegister() {
-                return `
-                    <div class="auth-container fade-in">
-                        <div class="auth-card">
-                            <img src="logo.png" class="auth-logo" alt="Logo">
-                            <h2 class="auth-title">Configuración Maestro</h2>
-                            <form id="register-form">
-                                <div class="form-group">
-                                    <label>Nombre</label>
-                                    <input type="text" class="form-control" name="name" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Correo Maestro</label>
-                                    <input type="email" class="form-control" name="email" placeholder="admin@makababy.com" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Código MÄKA</label>
-                                    <input type="password" class="form-control" name="secret" placeholder="MAKA2026" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Contraseña</label>
-                                    <input type="password" class="form-control" name="password" required>
-                                </div>
-                                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:1rem;">Crear Admin</button>
-                            </form>
                         </div>
                     </div>
                 `;
             },
             init() {
                 const loginForm = document.getElementById('login-form');
-                const registerForm = document.getElementById('register-form');
-
                 if (loginForm) {
-                    loginForm.onsubmit = (e) => {
+                    loginForm.onsubmit = async (e) => {
                         e.preventDefault();
                         const formData = new FormData(e.target);
                         const email = String(formData.get('email')).trim();
                         const password = String(formData.get('password')).trim();
-                        const result = Store.login(email, password);
+                        const result = await Store.login(email, password);
                         if (result.success) {
                             window.location.hash = '#dashboard';
                         } else {
                             alert(`Error: ${result.message}`);
                         }
-                    };
-                }
-
-                if (registerForm) {
-                    registerForm.onsubmit = (e) => {
-                        e.preventDefault();
-                        const formData = new FormData(e.target);
-                        const email = String(formData.get('email')).trim();
-                        const secret = String(formData.get('secret')).trim();
-                        const name = String(formData.get('name')).trim();
-                        const password = String(formData.get('password')).trim();
-
-                        if (email.toLowerCase() !== 'admin@makababy.com' || secret !== 'MAKA2026') {
-                            alert('Datos de Admin incorrectos. Verifique el correo maestro (admin@makababy.com) y el código MÄKA (MAKA2026).');
-                            return;
-                        }
-
-                        Store.registerUser({
-                            name,
-                            email,
-                            password,
-                            role: 'Super Admin'
-                        });
-                        alert('Administrador Maestro creado con éxito. Ahora puede iniciar sesión.');
-                        window.location.hash = '#login';
                     };
                 }
             }
@@ -1688,17 +1466,42 @@
                                 <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                             </div>
                         </form>
+
+                        <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--danger); opacity: 0.8;">
+                            <h3 style="color: var(--danger); margin-bottom: 1rem;">Zona de Peligro</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+                                Esta acción eliminará permanentemente todos los clientes y ventas de la base de datos y de este dispositivo.
+                            </p>
+                            <button id="wipe-data-btn" class="btn btn-ghost" style="color: var(--danger); border-color: var(--danger);">
+                                🗑️ Eliminar Toda la Información
+                            </button>
+                        </div>
                     </div>
                 `;
 
+                const wipeBtn = document.getElementById('wipe-data-btn');
+                if (wipeBtn) {
+                    wipeBtn.onclick = async () => {
+                        if (confirm('¿ESTÁS SEGURO? Esta acción borrará TODOS los clientes y ventas permanentemente.')) {
+                            const result = await Store.wipeAllData();
+                            if (result.success) {
+                                alert('Todos los datos han sido eliminados con éxito.');
+                                window.location.reload();
+                            } else {
+                                alert('Error al eliminar datos: ' + result.error);
+                            }
+                        }
+                    };
+                }
+
                 const form = document.getElementById('profile-form');
-                form.onsubmit = (e) => {
+                form.onsubmit = async (e) => {
                     e.preventDefault();
                     const data = Object.fromEntries(new FormData(e.target));
                     const update = { name: data.name, email: data.email };
                     if (data.password) update.password = data.password;
 
-                    if (Store.updateCurrentUser(update)) {
+                    if (await Store.updateCurrentUser(update)) {
                         alert('¡Perfil actualizado con éxito!');
                     }
                 };
