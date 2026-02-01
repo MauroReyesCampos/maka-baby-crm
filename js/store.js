@@ -87,6 +87,7 @@ export const Store = {
                         role: 'Admin'
                     };
                 }
+                this.notify(); // Notify UI after setting currentUser
                 this.initDataListeners();
             } else {
                 this.state.currentUser = null;
