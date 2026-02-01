@@ -7,7 +7,8 @@ import {
     doc,
     onSnapshot,
     query,
-    getDocs
+    getDocs,
+    limit
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
     signInWithEmailAndPassword,
@@ -193,10 +194,15 @@ export const Store = {
     // User Management Methods (Firestore based)
     async registerUser(userData) {
         try {
-            const hasUsers = this.state.users.length > 0;
+            // Direct Firestore check to bypass state sync delays
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, limit(1));
+            const snapshot = await getDocs(q);
+            const hasUsers = !snapshot.empty;
+
             const currentUser = this.state.currentUser;
 
-            // Bloquear registro público si ya hay usuarios
+            // Bloquear registro público si ya existe al menos un usuario
             if (hasUsers && !currentUser) {
                 throw new Error("El sistema ya ha sido inicializado. Inicie sesión para añadir usuarios.");
             }

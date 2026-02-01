@@ -953,7 +953,7 @@
                                             <td data-label="Acciones">
                                                 <div style="display: flex; gap: 10px;">
                                                     <button class="btn-icon edit-user" data-id="${user.id}" title="Editar">✏️</button>
-                                                    <button class="btn-icon delete-user" data-id="${user.id}" ${user.role === 'Super Admin' ? 'disabled' : ''} title="Eliminar">🗑️</button>
+                                                    <button class="btn-icon delete-user" data-id="${user.id}" ${user.uid === Store.state.currentUser.uid ? 'disabled' : ''} title="Eliminar">🗑️</button>
                                                 </div>
                                             </td>
                                         </tr>
