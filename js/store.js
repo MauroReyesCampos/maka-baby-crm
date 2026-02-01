@@ -124,7 +124,9 @@ export const Store = {
         const newSale = {
             ...saleData,
             saleNumber,
-            date: new Date().toISOString()
+            date: new Date().toISOString(),
+            paid: false,
+            status: 'Pendiente'
         };
         await addDoc(collection(db, "sales"), newSale);
     },

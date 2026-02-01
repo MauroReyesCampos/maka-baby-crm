@@ -17,6 +17,7 @@ export const SalesModule = {
                                 <th>No. Venta</th>
                                 <th>Fecha</th>
                                 <th>Cliente</th>
+                                <th>Estado</th>
                                 <th>Total Venta</th>
                                 <th style="text-align: right;">Acciones</th>
                             </tr>
@@ -46,11 +47,19 @@ export const SalesModule = {
                                         </td>
                                         <td data-label="Fecha">${new Date(sale.date).toLocaleDateString()}</td>
                                         <td data-label="Cliente" style="font-weight: 600;">${clientName}</td>
+                                        <td data-label="Estado">
+                                            <span class="status-badge ${sale.paid ? 'status-active' : 'status-inactive'}">
+                                                ${sale.paid ? 'Pagada' : 'Pendiente'}
+                                            </span>
+                                        </td>
                                         <td data-label="Total Venta" style="font-weight: 700; color: var(--primary);">$${sale.grandTotal ? sale.grandTotal.toLocaleString() : '0'}</td>
                                         <td data-label="Acciones">
                                             <div style="display: flex; gap: 8px; justify-content: flex-end;">
                                                 <button class="btn-icon print-invoice" data-id="${sale.id}" title="Imprimir">🖨️</button>
                                                 <button class="btn-icon print-label" data-id="${sale.id}" title="Etiqueta">📦</button>
+                                                <button class="btn-icon toggle-payment" data-id="${sale.id}" title="${sale.paid ? 'Marcar como Pendiente' : 'Marcar como Pagada'}">
+                                                    ${sale.paid ? '✅' : '💰'}
+                                                </button>
                                                 ${canEditOrDelete ? `
                                                     <button class="btn-icon edit-sale" data-id="${sale.id}" title="Editar">✏️</button>
                                                     <button class="btn-icon delete-sale" data-id="${sale.id}" title="Eliminar">🗑️</button>
@@ -79,11 +88,13 @@ export const SalesModule = {
             tableBody.onclick = (e) => {
                 const printInvoiceBtn = e.target.closest('.print-invoice');
                 const printLabelBtn = e.target.closest('.print-label');
+                const togglePaymentBtn = e.target.closest('.toggle-payment');
                 const editBtn = e.target.closest('.edit-sale');
                 const deleteBtn = e.target.closest('.delete-sale');
 
                 if (printInvoiceBtn) this.printInvoice(printInvoiceBtn.dataset.id);
                 if (printLabelBtn) this.printShippingLabel(printLabelBtn.dataset.id);
+                if (togglePaymentBtn) this.togglePaymentStatus(togglePaymentBtn.dataset.id);
                 if (editBtn) this.showModal(editBtn.dataset.id);
                 if (deleteBtn) this.deleteSale(deleteBtn.dataset.id);
             }
@@ -201,6 +212,21 @@ export const SalesModule = {
                 alert('No se pudo eliminar la venta: ' + result.message);
             }
         }
+    },
+
+    async togglePaymentStatus(id) {
+        if (Store.state.currentUser.role === 'Vendedor') {
+            alert('No tienes permisos para cambiar el estado de pago.');
+            return;
+        }
+        const sale = Store.state.sales.find(s => s.id === id);
+        if (!sale) return;
+
+        const newStatus = !sale.paid;
+        await Store.updateSale(id, {
+            paid: newStatus,
+            status: newStatus ? 'Pagada' : 'Pendiente'
+        });
     },
 
     bindRowEvents(row) {
