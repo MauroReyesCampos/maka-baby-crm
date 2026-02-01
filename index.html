@@ -971,7 +971,7 @@
                 if (addBtn) addBtn.onclick = () => this.showModal();
             },
             showModal(id = null) {
-                const user = id ? Store.state.users.find(u => u.id === id) : { name: '', email: '', password: '', role: 'Admin' };
+                const user = id ? Store.state.users.find(u => String(u.id) === String(id)) : { name: '', email: '', password: '', role: 'Admin' };
                 const modalContainer = document.getElementById('modal-container');
                 modalContainer.innerHTML = `
                     <div class="modal-content">
@@ -1288,8 +1288,8 @@
             },
 
             printShippingLabel(id) {
-                const sale = Store.state.sales.find(s => s.id === Number(id));
-                const client = Store.state.clients.find(c => c.id === Number(sale.clientId));
+                const sale = Store.state.sales.find(s => String(s.id) === String(id));
+                const client = Store.state.clients.find(c => String(c.id) === String(sale.clientId));
                 const printArea = document.getElementById('invoice-print-area');
 
                 printArea.innerHTML = `

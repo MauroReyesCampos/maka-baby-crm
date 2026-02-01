@@ -9,7 +9,9 @@ import {
     onSnapshot,
     query,
     getDocs,
-    limit
+    limit,
+    where,
+    doc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
     signInWithEmailAndPassword,
@@ -54,14 +56,37 @@ export const Store = {
         });
 
         // Listen for Auth changes
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                this.state.currentUser = {
-                    uid: user.uid,
-                    name: user.displayName || user.email.split('@')[0],
-                    email: user.email,
-                    role: 'Super Admin' // Default for now
-                };
+                // Fetch user data from Firestore to get the correct role
+                try {
+                    const q = query(collection(db, "users"), where("uid", "==", user.uid));
+                    const querySnapshot = await getDocs(q);
+
+                    let role = 'Admin'; // Default
+                    let userData = null;
+
+                    if (!querySnapshot.empty) {
+                        userData = querySnapshot.docs[0].data();
+                        role = userData.role || 'Admin';
+                    }
+
+                    this.state.currentUser = {
+                        uid: user.uid,
+                        name: user.displayName || user.email.split('@')[0],
+                        email: user.email,
+                        role: role
+                    };
+                } catch (error) {
+                    console.error("Error fetching user role:", error);
+                    // Fallback to minimal data if Firestore fails
+                    this.state.currentUser = {
+                        uid: user.uid,
+                        name: user.displayName || user.email.split('@')[0],
+                        email: user.email,
+                        role: 'Admin'
+                    };
+                }
                 this.initDataListeners();
             } else {
                 this.state.currentUser = null;
