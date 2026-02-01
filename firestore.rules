@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Función auxiliar para obtener el rol del usuario actual
+    function getUserRole() {
+      // Verifica si el usuario está autenticado y tiene un documento en 'users'
+      // Retorna el rol o null si no existe
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && getUserRole() == 'Super Admin';
+    }
+
+    function isAdmin() {
+      // Admin puede ser 'Admin' o 'Super Admin'
+      let role = getUserRole();
+      return isAuthenticated() && (role == 'Admin' || role == 'Super Admin');
+    }
+    
+    function isVendedor() {
+       return isAuthenticated() && getUserRole() == 'Vendedor';
+    }
+
+    // --- REGLAS POR COLECCIÓN ---
+
+    // Colección de Usuarios (users)
+    match /users/{userId} {
+      // Permitir leer si es el propio usuario (para login) o si es Admin/Super Admin
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      
+      // SOLO Admin/Super Admin pueden crear o modificar usuarios
+      // Nota: Para el primer registro del sistema (Setup), estas reglas podrían bloquear.
+      // Se asume que el Super Admin ya existe.
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Colección de Clientes (clients)
+    match /clients/{clientId} {
+      // Todos los usuarios autenticados pueden ver clientes (para hacer ventas)
+      allow read: if isAuthenticated();
+      
+      // Vendedores NO pueden crear, editar ni eliminar clientes
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Colección de Ventas (sales)
+    match /sales/{saleId} {
+      // Todos pueden ver el historial (o restringir si se desea)
+      allow read: if isAuthenticated();
+      
+      // Vendedores PUEDEN crear ventas
+      allow create: if isAuthenticated(); 
+      
+      // Vendedores NO pueden editar ni eliminar ventas
+      allow update, delete: if isAdmin();
+    }
+  }
+}
