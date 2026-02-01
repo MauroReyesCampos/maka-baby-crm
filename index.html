@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MÄKA Baby - Gestión de Clientes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* MÄKA Baby Inspired Palette - Soft Pastels */
+            --primary: #f8b1b1;
+            /* Soft Peach/Pink */
+            --primary-hover: #f59a9a;
+            --bg-dark: #fbfbfb;
+            /* Soft Off-white */
+            --bg-card: #ffffff;
+            --bg-sidebar: #f2f7f6;
+            /* Very soft mint/grey */
+            --text-main: #5d5d5d;
+            /* Dark grey for readability */
+            --text-muted: #9aa5a3;
+            --accent: #b8dad1;
+            /* Sage green */
+            --danger: #f2a6a6;
+            --border: #e8eeee;
+            --glass-bg: rgba(255, 255, 255, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 20px 0 rgba(0, 0, 0, 0.05);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            transition: var(--transition-smooth);
+            z-index: 100;
+            overflow: hidden;
+            /* Ensure logo doesn't overflow */
+        }
+
+        .sidebar-header {
+            padding: 1.5rem 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: white;
+            border: 1px solid var(--border);
+        }
+
+        .logo-text {
+            font-weight: 600;
+            font-size: 1.3rem;
+            letter-spacing: -0.5px;
+            color: var(--text-main);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 0 1rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 1rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: var(--transition-smooth);
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background-color: white;
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background-color: white;
+            border: 1px solid var(--border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .nav-item.active .nav-icon {
+            filter: none;
+        }
+
+        .sidebar-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            border: 1px solid var(--border);
+        }
+
+        .user-name {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .user-role {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        #page-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover {
+            background: var(--glass-bg);
+            color: var(--text-main);
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            transition: var(--transition-smooth);
+        }
+
+        .stat-card:hover {
+            transform: translateX(5px);
+            border-color: var(--primary);
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 1rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+            color: var(--text-main);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: var(--bg-sidebar);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            width: 500px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: var(--glass-shadow);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-family: inherit;
+            transition: var(--transition-smooth);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-inactive {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-icon {
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-icon:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Mobile Adjustments */
+        .mobile-only {
+            display: none;
+        }
+
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+                box-shadow: 20px 0 50px rgba(0, 0, 0, 0.1);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+
+            .mobile-only {
+                display: flex;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1.5rem !important;
+            }
+
+            .header-actions .btn span {
+                display: none;
+            }
+
+            #page-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Auth Styles */
+        .auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-dark);
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            border-radius: 32px;
+            padding: 3rem;
+            box-shadow: var(--glass-shadow);
+            text-align: center;
+        }
+
+        .auth-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            padding: 5px;
+        }
+
+        .auth-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .auth-footer {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .auth-link {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        @media (max-width: 600px) {
+            .top-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10px;
+                padding: 1.5rem;
+            }
+
+            .auth-card {
+                padding: 2rem;
+                border-radius: 24px;
+            }
+
+            /* Responsive Tables to Cards */
+            .table-container table,
+            .table-container thead,
+            .table-container tbody,
+            .table-container tfoot,
+            .table-container th,
+            .table-container td,
+            .table-container tr {
+                display: block;
+            }
+
+            .table-container thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            .table-container tr {
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                margin-bottom: 2rem;
+                background: white;
+                box-shadow: var(--glass-shadow);
+                padding: 1rem;
+            }
+
+            .table-container td {
+                border: none;
+                position: relative;
+                padding: 0.8rem 0 0.8rem 50% !important;
+                text-align: right;
+                min-height: 45px;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                border-bottom: 1px solid #f9f9f9;
+            }
+
+            .table-container td:before {
+                content: attr(data-label);
+                position: absolute;
+                left: 0;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: 600;
+                font-size: 0.85rem;
+                color: var(--text-muted);
+            }
+
+            .table-container td:last-child {
+                justify-content: center;
+                gap: 1.5rem;
+                border: none;
+                margin-top: 1rem;
+                padding: 1.5rem 0 0.5rem 0 !important;
+                border-top: 2px solid var(--bg-dark);
+            }
+
+            .table-container td:last-child:before {
+                display: none;
+            }
+
+            .modal-content {
+                width: 95% !important;
+                margin: 0 10px;
+                padding: 1.5rem;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+
+            .form-group-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .sale-item-row {
+                grid-template-columns: 1fr !important;
+                gap: 0.5rem !important;
+            }
+
+            /* Yearly Summary Mobile Specifics */
+            .yearly-summary-table tr {
+                display: flex !important;
+                flex-flow: row wrap !important;
+                margin-bottom: 1.5rem !important;
+                background: white;
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                padding: 1.5rem !important;
+                box-shadow: var(--glass-shadow);
+                align-items: center;
+                position: relative;
+            }
+
+            .yearly-summary-table td {
+                padding: 0.5rem !important;
+                min-height: auto !important;
+                border: none !important;
+                background: transparent !important;
+            }
+
+            .yearly-summary-table td:before {
+                display: none !important;
+            }
+
+            .yearly-summary-table .cell-month {
+                flex: 1 !important;
+                text-align: left !important;
+                font-weight: 600;
+                font-size: 1rem;
+                display: block !important;
+            }
+
+            .yearly-summary-table .cell-count {
+                flex: 1 !important;
+                text-align: right !important;
+                color: var(--text-muted);
+                display: block !important;
+                font-size: 0.95rem;
+            }
+
+            .yearly-summary-table .cell-total {
+                width: 100% !important;
+                text-align: center !important;
+                margin-top: 1rem;
+                padding-top: 1rem !important;
+                border-top: 1px solid var(--border) !important;
+                font-size: 1.3rem !important;
+                color: var(--primary);
+                font-weight: 600;
+                display: block !important;
+            }
+        }
+
+        /* Print Styles - Final Suppression */
+        @media print {
+            @page {
+                margin: 0px !important;
+                size: letter;
+            }
+
+            body {
+                margin: 0px !important;
+                padding: 0px !important;
+                background: white !important;
+            }
+
+            /* Aggressive Hide of all app UI */
+            body>*:not(#invoice-print-area) {
+                display: none !important;
+                opacity: 0 !important;
+                height: 0 !important;
+                overflow: hidden !important;
+            }
+
+            html,
+            body {
+                overflow: hidden !important;
+                width: 100% !important;
+                max-height: 100vh !important;
+            }
+
+            #invoice-print-area {
+                display: block !important;
+                visibility: visible !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: auto !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: white !important;
+                z-index: 999999 !important;
+            }
+
+            #invoice-print-area * {
+                visibility: visible !important;
+            }
+        }
+
+        #invoice-print-area {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="logo.png" alt="MÄKA Baby Logo" class="logo-img">
+                    <span class="logo-text">MÄKA Baby</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav" id="main-nav">
+                <!-- Nav items injected here -->
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile" id="user-info">
+                    <!-- User profile injected here -->
+                </div>
+            </div>
+        </aside>
+        <main class="main-content">
+            <header class="top-header">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button id="menu-toggle" class="btn-icon mobile-only">☰</button>
+                    <h1 id="page-title">Dashboard</h1>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="add-btn" style="display: none;">+ Nuevo Cliente</button>
+                </div>
+            </header>
+            <section id="content-area" class="content-wrapper">
+                <div class="loader">Cargando...</div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Hidden Print Area (Outside of app-container) -->
+    <div id="invoice-print-area"></div>
+
+    <div id="modal-container" class="modal-overlay" style="display: none;"></div>
+
+    <script>
+        // Store Management
+        const Store = {
+            state: {
+                clients: JSON.parse(localStorage.getItem('makabc_clients')) || [],
+                users: JSON.parse(localStorage.getItem('makabc_users')) || [],
+                currentUser: JSON.parse(localStorage.getItem('makabc_session')) || null,
+                sales: JSON.parse(localStorage.getItem('makabc_sales')) || [],
+                currentRoute: window.location.hash || '#dashboard'
+            },
+            listeners: [],
+            subscribe(callback) { this.listeners.push(callback); },
+            notify() { this.listeners.forEach(callback => callback(this.state)); },
+
+            // Client Methods
+            setClients(clients) {
+                this.state.clients = clients;
+                localStorage.setItem('makabc_clients', JSON.stringify(clients));
+                this.notify();
+            },
+            addClient(client) {
+                const newClient = { ...client, id: Date.now() };
+                this.setClients([...this.state.clients, newClient]);
+            },
+            updateClient(id, updatedClient) {
+                const clients = this.state.clients.map(c => c.id === Number(id) ? { ...c, ...updatedClient } : c);
+                this.setClients(clients);
+            },
+            deleteClient(id) {
+                const clients = this.state.clients.filter(c => c.id !== Number(id));
+                this.setClients(clients);
+            },
+
+            // User Methods
+            registerUser(userData) {
+                const userId = Date.now();
+                const newUser = {
+                    ...userData,
+                    id: userId,
+                    email: String(userData.email).toLowerCase().trim(),
+                    password: String(userData.password).trim()
+                };
+                this.state.users.push(newUser);
+                localStorage.setItem('makabc_users', JSON.stringify(this.state.users));
+                this.notify();
+                return newUser;
+            },
+            login(email, password) {
+                if (!email || !password) return { success: false, message: 'Ingrese correo y contraseña.' };
+                const cleanEmail = String(email).toLowerCase().trim();
+                const cleanPassword = String(password).trim();
+
+                const user = (this.state.users || []).find(u =>
+                    u && u.email && String(u.email).toLowerCase().trim() === cleanEmail
+                );
+
+                if (!user) {
+                    return { success: false, message: 'Correo no registrado.' };
+                }
+
+                if (String(user.password).trim() !== cleanPassword) {
+                    return { success: false, message: 'Contraseña incorrecta.' };
+                }
+
+                this.state.currentUser = user;
+                localStorage.setItem('makabc_session', JSON.stringify(user));
+                this.notify();
+                return { success: true };
+            },
+            updateCurrentUser(updatedData) {
+                const userIndex = this.state.users.findIndex(u => u.id === this.state.currentUser.id);
+                if (userIndex !== -1) {
+                    const updatedUser = { ...this.state.users[userIndex], ...updatedData };
+                    this.state.users[userIndex] = updatedUser;
+                    this.state.currentUser = updatedUser;
+                    localStorage.setItem('makabc_users', JSON.stringify(this.state.users));
+                    localStorage.setItem('makabc_session', JSON.stringify(updatedUser));
+                    this.notify();
+                    return true;
+                }
+                return false;
+            },
+            updateUser(id, updatedData) {
+                const userIndex = this.state.users.findIndex(u => u.id === Number(id));
+                if (userIndex !== -1) {
+                    const updatedUser = { ...this.state.users[userIndex], ...updatedData };
+                    this.state.users[userIndex] = updatedUser;
+
+                    // If updating self, also update session
+                    if (this.state.currentUser && this.state.currentUser.id === Number(id)) {
+                        this.state.currentUser = updatedUser;
+                        localStorage.setItem('makabc_session', JSON.stringify(updatedUser));
+                    }
+
+                    localStorage.setItem('makabc_users', JSON.stringify(this.state.users));
+                    this.notify();
+                    return true;
+                }
+                return false;
+            },
+            deleteUser(id) {
+                const users = this.state.users.filter(u => u.id !== Number(id));
+                this.state.users = users;
+                localStorage.setItem('makabc_users', JSON.stringify(users));
+
+                // If deleting self (unlikely but handled), logout
+                if (this.state.currentUser && this.state.currentUser.id === Number(id)) {
+                    this.logout();
+                } else {
+                    this.notify();
+                }
+            },
+            logout() {
+                this.state.currentUser = null;
+                localStorage.removeItem('makabc_session');
+                this.notify();
+            },
+            setRoute(route) {
+                this.state.currentRoute = route;
+                this.notify();
+            },
+
+            // Sales Methods
+            addSale(saleData) {
+                const year = new Date().getFullYear();
+                const yearSales = this.state.sales.filter(s => s.saleNumber && s.saleNumber.startsWith(year.toString()));
+
+                let nextNum = 1;
+                if (yearSales.length > 0) {
+                    const lastNum = Math.max(...yearSales.map(s => {
+                        const parts = s.saleNumber.split('-');
+                        return parts.length > 1 ? parseInt(parts[1]) : 0;
+                    }));
+                    nextNum = lastNum + 1;
+                }
+
+                const saleNumber = `${year}-${nextNum.toString().padStart(3, '0')}`;
+
+                const newSale = {
+                    ...saleData,
+                    id: Date.now(),
+                    saleNumber,
+                    date: new Date().toISOString()
+                };
+                this.state.sales.push(newSale);
+                localStorage.setItem('makabc_sales', JSON.stringify(this.state.sales));
+                this.notify();
+            },
+            updateSale(id, updatedData) {
+                const saleIndex = this.state.sales.findIndex(s => s.id === Number(id));
+                if (saleIndex !== -1) {
+                    this.state.sales[saleIndex] = { ...this.state.sales[saleIndex], ...updatedData };
+                    localStorage.setItem('makabc_sales', JSON.stringify(this.state.sales));
+                    this.notify();
+                    return true;
+                }
+                return false;
+            },
+            deleteSale(id) {
+                this.state.sales = this.state.sales.filter(s => s.id !== Number(id));
+                localStorage.setItem('makabc_sales', JSON.stringify(this.state.sales));
+                this.notify();
+            }
+        };
+
+        // Clients Module
+        const ClientsModule = {
+            render() {
+                const clients = Store.state.clients;
+                const canEditOrDelete = Store.state.currentUser && Store.state.currentUser.role !== 'Vendedor';
+                return `
+                    <div class="card fade-in">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nombre/Razon Social</th>
+                                        <th>Dirección</th>
+                                        <th>Complemento</th>
+                                        <th>Telefono</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${clients.length > 0 ? clients.map(client => `
+                                        <tr>
+                                            <td data-label="Nombre"><div style="font-weight: 600;">${client.name}</div></td>
+                                            <td data-label="NIT/Cédula">${client.nit}</td>
+                                            <td data-label="Teléfono">${client.phone}</td>
+                                            <td data-label="Ciudad">${client.city}</td>
+                                            <td data-label="Acciones">
+                                                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                                    ${canEditOrDelete ? `
+                                                        <button class="btn-icon" onclick="ClientsModule.showModal(${client.id})" title="Editar">✏️</button>
+                                                        <button class="btn-icon" onclick="ClientsModule.deleteClient(${client.id})" title="Eliminar">🗑️</button>
+                                                    ` : '<span style="color: var(--text-muted); font-size: 0.8rem;">Solo lectura</span>'}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('') : '<tr><td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-muted);">No hay clientes registrados</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            },
+            init() {
+                // No need for contentArea.onclick listener as actions are now direct onclicks
+                const addBtn = document.getElementById('add-btn');
+                if (addBtn) {
+                    addBtn.onclick = () => {
+                        if (Store.state.currentUser && Store.state.currentUser.role === 'Vendedor') {
+                            alert('No tienes permisos para añadir clientes.');
+                            return;
+                        }
+                        this.showModal();
+                    };
+                }
+            },
+            showModal(id = null) {
+                if (Store.state.currentUser && Store.state.currentUser.role === 'Vendedor') {
+                    alert('No tienes permisos para editar clientes.');
+                    return;
+                }
+                const client = id ? Store.state.clients.find(c => c.id === Number(id)) : {
+                    name: '', nit: '', phone: '', address: '', complement: '', neighborhood: '', city: '', state: ''
+                };
+                const modalContainer = document.getElementById('modal-container');
+                modalContainer.innerHTML = `
+                    <div class="modal-content" style="width: 600px; max-height: 90vh; overflow-y: auto;">
+                        <h2 style="margin-bottom: 1.5rem; color: var(--primary);">${id ? 'Editar Cliente' : 'Nuevo Cliente'}</h2>
+                        <form id="client-form">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group" style="grid-column: span 2;">
+                                    <label>Nombre/Razon Social</label>
+                                    <input type="text" class="form-control" name="name" value="${client.name}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Cedula/NIT</label>
+                                    <input type="text" class="form-control" name="nit" id="nit-input" value="${client.nit}" placeholder="Ej: 900.123.456" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Telefono</label>
+                                    <input type="text" class="form-control" name="phone" id="phone-input" value="${client.phone}" placeholder="Ej: (310) 1234567" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Dirección</label>
+                                    <input type="text" class="form-control" name="address" value="${client.address}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Complemento</label>
+                                    <input type="text" class="form-control" name="complement" value="${client.complement || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Barrio</label>
+                                    <input type="text" class="form-control" name="neighborhood" value="${client.neighborhood}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Ciudad</label>
+                                    <input type="text" class="form-control" name="city" value="${client.city}" required>
+                                </div>
+                                <div class="form-group" style="grid-column: span 2;">
+                                    <label>Departamento</label>
+                                    <input type="text" class="form-control" name="state" value="${client.state}" required>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; position: sticky; bottom: 0; background: white; padding-top: 1rem;">
+                                <button type="button" class="btn btn-ghost" id="close-modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">${id ? 'Guardar Cambios' : 'Crear Cliente'}</button>
+                            </div>
+                        </form>
+                    </div>
+                `;
+                modalContainer.style.display = 'flex';
+                document.getElementById('close-modal').onclick = () => modalContainer.style.display = 'none';
+
+                // Input Formatting Logic
+                const nitInput = document.getElementById('nit-input');
+                const phoneInput = document.getElementById('phone-input');
+
+                nitInput.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value) {
+                        value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                    }
+                    e.target.value = value;
+                });
+
+                phoneInput.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 0) {
+                        if (value.length <= 3) {
+                            value = `(${value}`;
+                        } else if (value.length <= 10) {
+                            value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+                        } else {
+                            value = `(${value.slice(0, 3)}) ${value.slice(3, 10)}`;
+                        }
+                    }
+                    e.target.value = value;
+                });
+
+                document.getElementById('client-form').onsubmit = (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    const clientData = Object.fromEntries(formData.entries());
+                    if (id) Store.updateClient(id, clientData);
+                    else Store.addClient(clientData);
+                    modalContainer.style.display = 'none';
+                };
+            },
+            deleteClient(id) {
+                if (Store.state.currentUser && Store.state.currentUser.role === 'Vendedor') {
+                    alert('No tienes permisos para eliminar clientes.');
+                    return;
+                }
+                if (confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
+                    Store.deleteClient(id);
+                }
+            }
+        };
+
+        // User Management Module
+        const UserManagementModule = {
+            render() {
+                const users = Store.state.users;
+                return `
+                    <div class="card fade-in">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Email</th>
+                                        <th>Rol</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${users.length > 0 ? users.map(user => `
+                                        <tr>
+                                            <td data-label="Nombre"><div style="font-weight: 600;">${user.name}</div></td>
+                                            <td data-label="Email">${user.email}</td>
+                                            <td data-label="Rol"><span class="status-badge status-active">${user.role}</span></td>
+                                            <td data-label="Acciones">
+                                                <div style="display: flex; gap: 10px;">
+                                                    <button class="btn-icon edit-user" data-id="${user.id}" title="Editar">✏️</button>
+                                                    <button class="btn-icon delete-user" data-id="${user.id}" ${user.role === 'Super Admin' ? 'disabled' : ''} title="Eliminar">🗑️</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('') : '<tr><td colspan="4" style="text-align: center; padding: 3rem; color: var(--text-muted);">No hay usuarios registrados</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            },
+            init() {
+                const contentArea = document.getElementById('content-area');
+                contentArea.onclick = (e) => {
+                    const deleteBtn = e.target.closest('.delete-user');
+                    const editBtn = e.target.closest('.edit-user');
+
+                    if (deleteBtn) {
+                        if (confirm('¿Estás seguro de eliminar este usuario?')) {
+                            Store.deleteUser(deleteBtn.dataset.id);
+                        }
+                    }
+
+                    if (editBtn) {
+                        this.showModal(editBtn.dataset.id);
+                    }
+                };
+                const addBtn = document.getElementById('add-btn');
+                if (addBtn) addBtn.onclick = () => this.showModal();
+            },
+            showModal(id = null) {
+                const user = id ? Store.state.users.find(u => u.id === Number(id)) : { name: '', email: '', password: '', role: 'Admin' };
+                const modalContainer = document.getElementById('modal-container');
+                modalContainer.innerHTML = `
+                    <div class="modal-content">
+                        <h2 style="margin-bottom: 1.5rem; color: var(--primary);">${id ? 'Editar Usuario' : 'Nuevo Usuario'}</h2>
+                        <form id="new-user-form">
+                            <div class="form-group"><label>Nombre</label><input type="text" class="form-control" name="name" value="${user.name}" required></div>
+                            <div class="form-group"><label>Email</label><input type="email" class="form-control" name="email" value="${user.email}" required></div>
+                            <div class="form-group"><label>Contraseña</label><input type="password" class="form-control" name="password" placeholder="${id ? 'Dejar en blanco para no cambiar' : 'Requerido'}" ${id ? '' : 'required'}></div>
+                            <div class="form-group">
+                                <label>Rol</label>
+                                <select class="form-control" name="role" ${user.role === 'Super Admin' ? 'disabled' : ''}>
+                                    <option value="Super Admin" ${user.role === 'Super Admin' ? 'selected' : ''}>Super Admin</option>
+                                    <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option>
+                                    <option value="Vendedor" ${user.role === 'Vendedor' ? 'selected' : ''}>Vendedor</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                                <button type="button" class="btn btn-ghost" id="close-modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">${id ? 'Guardar Cambios' : 'Crear Usuario'}</button>
+                            </div>
+                        </form>
+                    </div>
+                `;
+                modalContainer.style.display = 'flex';
+                document.getElementById('close-modal').onclick = () => modalContainer.style.display = 'none';
+                document.getElementById('new-user-form').onsubmit = (e) => {
+                    e.preventDefault();
+                    const data = Object.fromEntries(new FormData(e.target));
+
+                    if (id) {
+                        const updatedUser = { name: data.name, email: data.email };
+                        if (data.password) updatedUser.password = data.password;
+                        if (data.role) updatedUser.role = data.role; // Role can be updated unless it's Super Admin
+                        Store.updateUser(id, updatedUser);
+                    } else {
+                        Store.registerUser(data);
+                    }
+                    modalContainer.style.display = 'none';
+                };
+            }
+        };
+
+        // Sales Module
+        const SalesModule = {
+            render() {
+                const sales = Store.state.sales;
+                const clients = Store.state.clients;
+                const currentUser = Store.state.currentUser;
+                const canEditOrDelete = currentUser && currentUser.role !== 'Vendedor';
+
+                // Render structure first, then initialize table body
+                return `
+                    <div class="card fade-in">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>No. Venta</th>
+                                        <th>Fecha</th>
+                                        <th>Cliente</th>
+                                        <th>Total Venta</th>
+                                        <th style="text-align: right;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sales-table-body">
+                                    ${sales.sort((a, b) => new Date(b.date) - new Date(a.date)).map(sale => {
+                    const client = clients.find(c => c.id === Number(sale.clientId));
+                    return `
+                                            <tr>
+                                                <td data-label="No. Venta">
+                                                    <span class="status-badge" style="background: var(--bg-sidebar); border: 1px solid var(--border); color: var(--text-main);">
+                                                        ${sale.saleNumber}
+                                                    </span>
+                                                </td>
+                                                <td data-label="Fecha">${new Date(sale.date).toLocaleDateString()}</td>
+                                                <td data-label="Cliente" style="font-weight: 600;">${client ? client.name : 'Desconocido'}</td>
+                                                <td data-label="Total Venta" style="font-weight: 700; color: var(--primary);">$${sale.grandTotal.toLocaleString()}</td>
+                                                <td data-label="Acciones">
+                                                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                                        <button class="btn-icon" title="Imprimir" onclick="SalesModule.printInvoice(${sale.id})">🖨️</button>
+                                                        <button class="btn-icon" title="Etiqueta" onclick="SalesModule.printShippingLabel(${sale.id})">📦</button>
+                                                        ${canEditOrDelete ? `
+                                                            <button class="btn-icon" onclick="SalesModule.showModal(${sale.id})" title="Editar">✏️</button>
+                                                            <button class="btn-icon" onclick="SalesModule.deleteSale(${sale.id})" title="Eliminar">🗑️</button>
+                                                        ` : ''}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        `;
+                }).join('') || '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No hay ventas.</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            },
+
+            init() {
+                const addBtn = document.getElementById('add-btn');
+                if (addBtn) addBtn.onclick = () => this.showModal();
+            },
+
+            showModal(id = null) {
+                if (id && Store.state.currentUser.role === 'Vendedor') {
+                    alert('No tienes permisos para editar ventas.');
+                    return;
+                }
+                const sale = id ? Store.state.sales.find(s => s.id === Number(id)) : null;
+                const clients = Store.state.clients;
+                const modalContainer = document.getElementById('modal-container');
+
+                modalContainer.innerHTML = `
+                    <div class="modal-content" style="width: 100%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+                        <h2 style="margin-bottom: 1.5rem; color: var(--primary);">${id ? 'Editar Venta ' + sale.saleNumber : 'Nueva Venta'}</h2>
+                        <form id="sales-form">
+                            <div class="form-group">
+                                <label>Seleccionar Cliente</label>
+                                <select class="form-control" name="clientId" required>
+                                    <option value="">Seleccione un cliente...</option>
+                                    ${clients.map(c => `<option value="${c.id}" ${sale && Number(sale.clientId) === c.id ? 'selected' : ''}>${c.name} (${c.nit})</option>`).join('')}
+                                </select>
+                            </div>
+
+                            <div style="margin-top: 2rem;">
+                                <h3 style="font-size: 1rem; margin-bottom: 1rem;">Detalle de Productos</h3>
+                                <div id="items-container"></div>
+                                <button type="button" class="btn btn-ghost" id="add-item-row" style="margin-top: 1rem;">+ Añadir Producto</button>
+                            </div>
+
+                            <div style="margin-top: 2rem; border-top: 2px solid var(--border); padding-top: 1.5rem; text-align: right;">
+                                <div style="font-size: 1.2rem; font-weight: 700;">Total Venta: <span id="grand-total" style="color: var(--primary);">$${sale ? sale.grandTotal.toLocaleString() : '0'}</span></div>
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                                <button type="button" class="btn btn-ghost" id="close-modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">${id ? 'Guardar Cambios' : 'Registrar Venta'}</button>
+                            </div>
+                        </form>
+                    </div>
+                `;
+                modalContainer.style.display = 'flex';
+
+                const itemsContainer = document.getElementById('items-container');
+                const addRow = (itemData = null) => {
+                    const row = document.createElement('div');
+                    row.className = 'sale-item-row fade-in';
+                    row.style = 'display: grid; grid-template-columns: 2.5fr 100px 150px 150px auto; gap: 1rem; margin-bottom: 1.5rem; align-items: end; border-bottom: 1px solid var(--border); padding-bottom: 1rem;';
+                    row.innerHTML = `
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Descripción</label>
+                            <input type="text" class="form-control" name="desc" value="${itemData ? itemData.description : ''}" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Cant.</label>
+                            <input type="number" class="form-control qty-input" name="qty" min="1" value="${itemData ? itemData.quantity : '1'}" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Precio Unit.</label>
+                            <input type="text" class="form-control price-input" name="price" value="${itemData ? itemData.unitPrice.toLocaleString() : '0'}" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Total</label>
+                            <div class="form-control line-total" style="background: var(--bg-sidebar); border: none; font-weight: 600;">$${itemData ? itemData.total.toLocaleString() : '0'}</div>
+                        </div>
+                        <button type="button" class="btn-icon remove-row" style="color: var(--danger);">🗑️</button>
+                    `;
+                    itemsContainer.appendChild(row);
+                    this.bindRowEvents(row);
+                };
+
+                if (sale && sale.items) {
+                    sale.items.forEach(item => addRow(item));
+                } else {
+                    addRow();
+                }
+
+                document.getElementById('add-item-row').onclick = () => addRow();
+                document.getElementById('close-modal').onclick = () => modalContainer.style.display = 'none';
+
+                document.getElementById('sales-form').onsubmit = (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    const clientId = formData.get('clientId');
+                    const rows = itemsContainer.querySelectorAll('.sale-item-row');
+                    const items = Array.from(rows).map(row => {
+                        const qty = Number(row.querySelector('[name="qty"]').value);
+                        const price = Number(row.querySelector('[name="price"]').value.replace(/\D/g, ''));
+                        return {
+                            description: row.querySelector('[name="desc"]').value,
+                            quantity: qty,
+                            unitPrice: price,
+                            total: qty * price
+                        };
+                    });
+                    const grandTotal = items.reduce((sum, item) => sum + item.total, 0);
+
+                    if (id) Store.updateSale(id, { clientId, items, grandTotal });
+                    else Store.addSale({ clientId, items, grandTotal });
+                    modalContainer.style.display = 'none';
+                };
+            },
+
+            bindRowEvents(row) {
+                const qtyInput = row.querySelector('.qty-input');
+                const priceInput = row.querySelector('.price-input');
+                const lineTotal = row.querySelector('.line-total');
+                const removeBtn = row.querySelector('.remove-row');
+
+                priceInput.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value) value = Number(value).toLocaleString();
+                    e.target.value = value;
+                    updateRowTotal();
+                });
+
+                const updateRowTotal = () => {
+                    const qty = Number(qtyInput.value) || 0;
+                    const price = Number(priceInput.value.replace(/\D/g, '')) || 0;
+                    const total = qty * price;
+                    lineTotal.innerText = `$${total.toLocaleString()}`;
+                    this.updateGrandTotal();
+                };
+
+                qtyInput.oninput = updateRowTotal;
+                priceInput.oninput = updateRowTotal;
+                removeBtn.onclick = () => {
+                    row.remove();
+                    this.updateGrandTotal();
+                };
+                updateRowTotal();
+            },
+
+            printInvoice(id) {
+                const sale = Store.state.sales.find(s => s.id === Number(id));
+                const client = Store.state.clients.find(c => c.id === Number(sale.clientId));
+                const printArea = document.getElementById('invoice-print-area');
+
+                printArea.innerHTML = `
+                    <div style="padding: 2.5cm; font-family: 'Outfit', sans-serif; color: #333; width: 21cm; min-height: 27cm; margin: 0 auto; background: white; box-sizing: border-box;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <img src="logo.png" style="width: 4cm; height: auto;">
+                            <div style="border: 1px solid #000; padding: 0.5rem 1rem; text-align: center;">
+                                <div style="font-size: 0.8rem;">FACTURA DE VENTA</div>
+                                <div style="font-size: 1.2rem; font-weight: 700;">N° ${sale.saleNumber}</div>
+                            </div>
+                        </div>
+                        <div style="border-bottom: 2px solid #000; padding: 1rem 0; margin-bottom: 1rem;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div><strong>CLIENTE:</strong> ${client.name}</div>
+                                <div style="text-align: right;"><strong>FECHA:</strong> ${new Date(sale.date).toLocaleDateString()}</div>
+                                <div><strong>NIT/CC:</strong> ${client.nit}</div>
+                                <div style="text-align: right;"><strong>TEL:</strong> ${client.phone}</div>
+                                <div><strong>DIR:</strong> ${client.address} ${client.complement || ''}</div>
+                                <div style="text-align: right;"><strong>CIUDAD:</strong> ${client.city}</div>
+                            </div>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 2rem;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #000;">
+                                    <th style="padding: 0.5rem; text-align: left;">DESCRIPCIÓN</th>
+                                    <th style="padding: 0.5rem; text-align: center;">CANT</th>
+                                    <th style="padding: 0.5rem; text-align: right;">VALOR UNIT</th>
+                                    <th style="padding: 0.5rem; text-align: right;">TOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${sale.items.map(item => `
+                                    <tr style="border-bottom: 1px solid #eee;">
+                                        <td style="padding: 0.5rem;">${item.description}</td>
+                                        <td style="padding: 0.5rem; text-align: center;">${item.quantity}</td>
+                                        <td style="padding: 0.5rem; text-align: right;">$${item.unitPrice.toLocaleString()}</td>
+                                        <td style="padding: 0.5rem; text-align: right;">$${item.total.toLocaleString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <div style="display: flex; justify-content: flex-end;">
+                            <div style="width: 6cm; border-top: 2px solid #000; padding-top: 0.5rem; display: flex; justify-content: space-between;">
+                                <strong>TOTAL:</strong>
+                                <strong>$${sale.grandTotal.toLocaleString()}</strong>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                setTimeout(() => window.print(), 250);
+            },
+
+            printShippingLabel(id) {
+                const sale = Store.state.sales.find(s => s.id === Number(id));
+                const client = Store.state.clients.find(c => c.id === Number(sale.clientId));
+                const printArea = document.getElementById('invoice-print-area');
+
+                printArea.innerHTML = `
+                    <div style="width: 21.59cm; height: 13.97cm; position: relative; background: white; padding: 0.5cm; box-sizing: border-box; margin: 0 auto;">
+                        <div style="width: 100%; height: 100%; border: 4px solid #000; border-radius: 40px; padding: 40px; position: relative; box-sizing: border-box;">
+                            <div style="position: absolute; top: 40px; left: 60px; font-size: 1.1rem; line-height: 1.3;">
+                                <strong>Milena Raynaud Prado</strong><br>
+                                Carrera 65 #169A-50 casa 44<br>
+                                Conjunto Jardines del Cabo<br>
+                                Bogotá D.C.<br>
+                                3177875935
+                            </div>
+                            <img src="logo.png" style="position: absolute; top: 15px; right: 60px; width: 140px;">
+                            <div style="position: absolute; top: 175px; left: 40px; right: 40px; border-top: 3px solid #000;"></div>
+                            <div style="position: absolute; top: 205px; left: 40px; right: 40px; text-align: center;">
+                                <div style="font-size: 2.6rem; font-weight: 700;">${client.name}</div>
+                                <div style="font-size: 1.7rem;">${client.address}</div>
+                                ${client.complement ? `<div style="font-size: 1.5rem;">${client.complement}</div>` : ''}
+                                ${client.neighborhood ? `<div style="font-size: 1.5rem;">${client.neighborhood}</div>` : ''}
+                                <div style="font-size: 1.5rem;">${client.city} - ${client.state}</div>
+                                <div style="font-size: 1.8rem; font-weight: 600; margin-top: 20px;">${client.phone}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                setTimeout(() => window.print(), 250);
+            },
+
+            deleteSale(id) {
+                if (Store.state.currentUser.role === 'Vendedor') {
+                    alert('No tienes permisos.');
+                    return;
+                }
+                if (confirm('¿Eliminar esta venta?')) Store.deleteSale(id);
+            },
+
+            updateGrandTotal() {
+                const totals = Array.from(document.querySelectorAll('.line-total'))
+                    .map(el => Number(el.innerText.replace(/\D/g, '')));
+                const grand = totals.reduce((sum, val) => sum + val, 0);
+                const grandEl = document.getElementById('grand-total');
+                if (grandEl) grandEl.innerText = `$${grand.toLocaleString()}`;
+            }
+        };
+
+        // Auth Module
+        const AuthModule = {
+            render() {
+                const hash = Store.state.currentRoute;
+                if (hash === '#register') return this.renderRegister();
+                return this.renderLogin();
+            },
+            renderLogin() {
+                const userCount = (Store.state.users || []).length;
+                return `
+                    <div class="auth-container fade-in">
+                        <div class="auth-card">
+                            <img src="logo.png" class="auth-logo" alt="Logo">
+                            <h2 class="auth-title">Bienvenido</h2>
+                            <form id="login-form">
+                                <div class="form-group">
+                                    <label>Correo Electrónico</label>
+                                    <input type="email" class="form-control" name="email" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Contraseña</label>
+                                    <input type="password" class="form-control" name="password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:1rem;">Entrar</button>
+                            </form>
+                            <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted); text-align: center; border-top: 1px solid var(--border); padding-top: 0.5rem;">
+                                Estado del Sistema: ${userCount === 0 ? '<span style="color: var(--danger);">Sin usuarios</span>' : `<span>${userCount} usuario(s) registrado(s)</span>`}
+                            </div>
+                            ${!Store.state.users.some(u => u.role === 'Super Admin') ? `
+                                <div class="auth-footer">
+                                    <a href="#register" class="auth-link">Registrar Super Admin Inicial</a>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            },
+            renderRegister() {
+                return `
+                    <div class="auth-container fade-in">
+                        <div class="auth-card">
+                            <img src="logo.png" class="auth-logo" alt="Logo">
+                            <h2 class="auth-title">Configuración Maestro</h2>
+                            <form id="register-form">
+                                <div class="form-group">
+                                    <label>Nombre</label>
+                                    <input type="text" class="form-control" name="name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Correo Maestro</label>
+                                    <input type="email" class="form-control" name="email" placeholder="admin@makababy.com" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Código MÄKA</label>
+                                    <input type="password" class="form-control" name="secret" placeholder="MAKA2026" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Contraseña</label>
+                                    <input type="password" class="form-control" name="password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:1rem;">Crear Admin</button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            },
+            init() {
+                const loginForm = document.getElementById('login-form');
+                const registerForm = document.getElementById('register-form');
+
+                if (loginForm) {
+                    loginForm.onsubmit = (e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.target);
+                        const email = String(formData.get('email')).trim();
+                        const password = String(formData.get('password')).trim();
+                        const result = Store.login(email, password);
+                        if (result.success) {
+                            window.location.hash = '#dashboard';
+                        } else {
+                            alert(`Error: ${result.message}`);
+                        }
+                    };
+                }
+
+                if (registerForm) {
+                    registerForm.onsubmit = (e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.target);
+                        const email = String(formData.get('email')).trim();
+                        const secret = String(formData.get('secret')).trim();
+                        const name = String(formData.get('name')).trim();
+                        const password = String(formData.get('password')).trim();
+
+                        if (email.toLowerCase() !== 'admin@makababy.com' || secret !== 'MAKA2026') {
+                            alert('Datos de Admin incorrectos. Verifique el correo maestro (admin@makababy.com) y el código MÄKA (MAKA2026).');
+                            return;
+                        }
+
+                        Store.registerUser({
+                            name,
+                            email,
+                            password,
+                            role: 'Super Admin'
+                        });
+                        alert('Administrador Maestro creado con éxito. Ahora puede iniciar sesión.');
+                        window.location.hash = '#login';
+                    };
+                }
+            }
+        };
+
+        const App = {
+            init() {
+                this.contentArea = document.getElementById('content-area');
+                this.pageTitle = document.getElementById('page-title');
+                this.addBtn = document.getElementById('add-btn');
+                this.sidebar = document.querySelector('.sidebar');
+                this.mainNav = document.getElementById('main-nav');
+                this.userInfo = document.getElementById('user-info');
+                window.onhashchange = () => this.handleRoute();
+                Store.subscribe(() => this.render());
+                this.handleRoute();
+            },
+            handleRoute() {
+                const hash = window.location.hash || '#dashboard';
+                const user = Store.state.currentUser;
+                if (!user && !['#login', '#register'].includes(hash)) { window.location.hash = '#login'; return; }
+                if (user && ['#login', '#register'].includes(hash)) { window.location.hash = '#dashboard'; return; }
+                Store.setRoute(hash); this.render();
+            },
+            render() {
+                const hash = Store.state.currentRoute;
+                const user = Store.state.currentUser;
+                if (!user) {
+                    this.sidebar.style.display = 'none';
+                    document.querySelector('.main-content').style.marginLeft = '0';
+                    this.contentArea.innerHTML = AuthModule.render();
+                    AuthModule.init(); return;
+                }
+                this.sidebar.style.display = 'flex';
+                document.querySelector('.main-content').style.marginLeft = (window.innerWidth > 900) ? '260px' : '0';
+                this.renderSidebar();
+                this.addBtn.style.display = (hash === '#clients' || (hash === '#users' && user.role === 'Super Admin') || hash === '#sales') ? 'flex' : 'none';
+                this.addBtn.innerText = hash === '#clients' ? '+ Nuevo Cliente' : hash === '#users' ? '+ Nuevo Usuario' : '+ Nueva Venta';
+
+                switch (hash) {
+                    case '#clients': this.pageTitle.innerText = 'Clientes'; this.contentArea.innerHTML = ClientsModule.render(); ClientsModule.init(); break;
+                    case '#sales': this.pageTitle.innerText = 'Ventas'; this.contentArea.innerHTML = SalesModule.render(); SalesModule.init(); break;
+                    case '#users': this.pageTitle.innerText = 'Usuarios'; this.contentArea.innerHTML = UserManagementModule.render(); UserManagementModule.init(); break;
+                    case '#settings': this.pageTitle.innerText = 'Perfil'; this.renderSettings(); break;
+                    default: this.pageTitle.innerText = 'Dashboard'; this.renderDashboard(); break;
+                }
+            },
+            renderSidebar() {
+                const user = Store.state.currentUser;
+                const hash = Store.state.currentRoute;
+                this.mainNav.innerHTML = `
+                    <a href="#dashboard" class="nav-item ${hash === '#dashboard' ? 'active' : ''}"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+                    <a href="#clients" class="nav-item ${hash === '#clients' ? 'active' : ''}"><span class="nav-icon">👤</span><span class="nav-label">Clientes</span></a>
+                    <a href="#sales" class="nav-item ${hash === '#sales' ? 'active' : ''}"><span class="nav-icon">💰</span><span class="nav-label">Ventas</span></a>
+                    ${user.role === 'Super Admin' ? `
+                        <a href="#users" class="nav-item ${hash === '#users' ? 'active' : ''}"><span class="nav-icon">👥</span><span class="nav-label">Usuarios</span></a>
+                    ` : ''}
+                    <a href="#settings" class="nav-item ${hash === '#settings' ? 'active' : ''}"><span class="nav-icon">⚙️</span><span class="nav-label">Perfil</span></a>
+                    <a href="#" id="logout-btn" class="nav-item" style="margin-top: auto; color: var(--danger);"><span class="nav-icon">🚪</span><span class="nav-label">Cerrar Sesión</span></a>
+        `;
+
+                this.userInfo.innerHTML = `
+                    <div class="user-avatar">${user.name.charAt(0).toUpperCase()}</div>
+                    <div class="user-info">
+                        <span class="user-name">${user.name}</span>
+                        <span class="user-role">${user.role}</span>
+                    </div>
+                `;
+
+                document.getElementById('logout-btn').onclick = (e) => {
+                    e.preventDefault();
+                    if (confirm('¿Deseas cerrar sesión?')) {
+                        Store.logout();
+                        window.location.hash = '#login';
+                    }
+                };
+            },
+
+            renderSettings() {
+                const user = Store.state.currentUser;
+                this.contentArea.innerHTML = `
+                    <div class="card fade-in" style="max-width: 600px; margin: 0 auto;">
+                        <h2 style="margin-bottom: 2rem; color: var(--primary);">Mi Perfil</h2>
+                        <form id="profile-form">
+                            <div class="form-group">
+                                <label>Nombre Completo</label>
+                                <input type="text" class="form-control" name="name" value="${user.name}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Correo Electrónico Real</label>
+                                <input type="email" class="form-control" name="email" value="${user.email}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nueva Contraseña</label>
+                                <input type="password" class="form-control" name="password" placeholder="Solo si deseas cambiarla">
+                            </div>
+                            <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
+                                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            </div>
+                        </form>
+                    </div>
+                `;
+
+                const form = document.getElementById('profile-form');
+                form.onsubmit = (e) => {
+                    e.preventDefault();
+                    const data = Object.fromEntries(new FormData(e.target));
+                    const update = { name: data.name, email: data.email };
+                    if (data.password) update.password = data.password;
+
+                    if (Store.updateCurrentUser(update)) {
+                        alert('¡Perfil actualizado con éxito!');
+                    }
+                };
+            },
+            renderDashboard() {
+                const sales = Store.state.sales || [];
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+
+                const monthSales = sales.filter(s => {
+                    const date = new Date(s.date);
+                    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+                });
+
+                const yearSales = sales.filter(s => {
+                    const date = new Date(s.date);
+                    return date.getFullYear() === currentYear;
+                });
+
+                const monthTotal = monthSales.reduce((sum, s) => sum + (Number(s.grandTotal) || 0), 0);
+                const yearTotal = yearSales.reduce((sum, s) => sum + (Number(s.grandTotal) || 0), 0);
+
+                this.contentArea.innerHTML = `
+                    <div class="dashboard-grid fade-in">
+                        <div class="card stat-card">
+                            <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Ventas del Mes (Cant.)</div>
+                            <div style="font-size: 1.8rem; font-weight: 700; color: var(--secondary);">${monthSales.length}</div>
+                        </div>
+                        <div class="card stat-card">
+                            <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Ventas del Mes ($)</div>
+                            <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);">$${monthTotal.toLocaleString()}</div>
+                        </div>
+                        <div class="card stat-card" onclick="App.showYearlyDetail()" style="cursor: pointer; position: relative;">
+                            <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Total Ventas Año (${currentYear})</div>
+                            <div style="font-size: 1.8rem; font-weight: 700; color: var(--warning);">$${yearTotal.toLocaleString()}</div>
+                            <div style="font-size: 0.7rem; color: var(--primary); margin-top: 0.5rem;">Ver detalle mensual →</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card fade-in" style="margin-top: 4rem; padding: 2rem; text-align: center; border-style: dashed; border-color: var(--border);">
+                        <h2 style="color: var(--primary); margin-bottom: 1rem;">¡Bienvenido a MÄKA Baby CRM!</h2>
+                        <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto;">
+                            Use el menú lateral para gestionar sus clientes, registrar nuevas ventas o administrar su equipo de trabajo.
+                        </p>
+                    </div>
+                `;
+            },
+            showYearlyDetail() {
+                const sales = Store.state.sales || [];
+                const currentYear = new Date().getFullYear();
+                const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+                const monthlySummary = Array.from({ length: 12 }, (_, i) => {
+                    const monthSales = sales.filter(s => {
+                        const date = new Date(s.date);
+                        return date.getMonth() === i && date.getFullYear() === currentYear;
+                    });
+                    const total = monthSales.reduce((sum, s) => sum + (Number(s.grandTotal) || 0), 0);
+                    return { month: monthNames[i], total, count: monthSales.length };
+                });
+
+                const modalContainer = document.getElementById('modal-container');
+                modalContainer.innerHTML = `
+                    <div class="modal-content" style="width: 500px;">
+                        <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Resumen Anual ${currentYear}</h2>
+                        <div class="table-container">
+                            <table class="yearly-summary-table" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="background: var(--bg-sidebar); padding: 10px;">Mes</th>
+                                        <th style="background: var(--bg-sidebar); padding: 10px; text-align: center;">Cant.</th>
+                                        <th style="background: var(--bg-sidebar); padding: 10px; text-align: right;">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${monthlySummary.map(m => `
+                                        <tr>
+                                            <td data-label="Mes" class="cell-month" style="padding: 10px;">${m.month}</td>
+                                            <td data-label="Cant." class="cell-count" style="padding: 10px; text-align: center;">${m.count}</td>
+                                            <td data-label="Total" class="cell-total" style="padding: 10px; text-align: right; font-weight: 600;">$${m.total.toLocaleString()}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+                            <button type="button" class="btn btn-primary" onclick="document.getElementById('modal-container').style.display='none'">Cerrar</button>
+                        </div>
+                    </div>
+                `;
+                modalContainer.style.display = 'flex';
+            }
+        };
+
+        // Mobile Menu Toggle Logic
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'menu-toggle') {
+                document.querySelector('.sidebar').classList.toggle('active');
+            } else if (!e.target.closest('.sidebar') && document.querySelector('.sidebar.active')) {
+                document.querySelector('.sidebar').classList.remove('active');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => App.init());
+    </script>
+</body>
+
+</html>
