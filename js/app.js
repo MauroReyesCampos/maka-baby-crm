@@ -1,7 +1,7 @@
 import { Store } from './store.js';
 import { ClientsModule } from './clients.js';
 import { UsersModule } from './users.js';
-import { SalesModule } from './sales.js';
+import { SalesModule } from './sales.js?v=2';
 import { AuthModule } from './auth.js';
 
 const App = {
