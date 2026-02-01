@@ -1444,7 +1444,14 @@
             handleRoute() {
                 const hash = window.location.hash || '#dashboard';
                 const user = Store.state.currentUser;
-                const hasUsers = Store.state.users.length > 0;
+                const users = Store.state.users;
+                const hasUsers = users.length > 0;
+
+                // Wait for initial users load to avoid incorrect redirection
+                if (Store.state.loading && users.length === 0) {
+                    this.contentArea.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100vh;">Cargando sistema...</div>';
+                    return;
+                }
 
                 // If no user is logged in
                 if (!user) {

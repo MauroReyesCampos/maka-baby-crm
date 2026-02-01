@@ -39,6 +39,17 @@ export const Store = {
     },
 
     init() {
+        // Listen for Users independently of auth (to detect "system fresh" state)
+        onSnapshot(collection(db, "users"), (snapshot) => {
+            this.state.users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            this.state.loading = false;
+            this.notify();
+        }, (error) => {
+            console.error("Error listening to users:", error);
+            this.state.loading = false;
+            this.notify();
+        });
+
         // Listen for Auth changes
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -46,7 +57,7 @@ export const Store = {
                     uid: user.uid,
                     name: user.displayName || user.email.split('@')[0],
                     email: user.email,
-                    role: 'Super Admin' // Default for now, should be fetched from a user doc
+                    role: 'Super Admin' // Default for now
                 };
                 this.initDataListeners();
             } else {
@@ -69,12 +80,6 @@ export const Store = {
         // Listen for Sales
         onSnapshot(collection(db, "sales"), (snapshot) => {
             this.state.sales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            this.notify();
-        });
-
-        // Listen for Users
-        onSnapshot(collection(db, "users"), (snapshot) => {
-            this.state.users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             this.notify();
         });
     },
@@ -188,6 +193,14 @@ export const Store = {
     // User Management Methods (Firestore based)
     async registerUser(userData) {
         try {
+            const hasUsers = this.state.users.length > 0;
+            const currentUser = this.state.currentUser;
+
+            // Bloquear registro público si ya hay usuarios
+            if (hasUsers && !currentUser) {
+                throw new Error("El sistema ya ha sido inicializado. Inicie sesión para añadir usuarios.");
+            }
+
             // 1. Create the account in Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
             const user = userCredential.user;
