@@ -257,7 +257,9 @@ export const SalesModule = {
                         <div><strong>NIT/CC:</strong> ${client.nit || ''}</div>
                         <div style="text-align: right;"><strong>TEL:</strong> ${client.phone || ''}</div>
                         <div><strong>DIR:</strong> ${client.address || ''} ${client.complement || ''}</div>
-                        <div style="text-align: right;"><strong>CIUDAD:</strong> ${client.city || ''}</div>
+                        <div style="text-align: right;"><strong>BARRIO:</strong> ${client.neighborhood || ''}</div>
+                        <div><strong>CIUDAD:</strong> ${client.city || ''}</div>
+                        <div style="text-align: right;"><strong>DEPTO:</strong> ${client.state || ''}</div>
                     </div>
                 </div>
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 2rem;">
