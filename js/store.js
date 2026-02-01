@@ -11,6 +11,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
     signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
     updateProfile,
@@ -181,10 +182,28 @@ export const Store = {
 
     // User Management Methods (Firestore based)
     async registerUser(userData) {
-        await addDoc(collection(db, "users"), {
-            ...userData,
-            createdAt: new Date().toISOString()
-        });
+        try {
+            // 1. Create the account in Firebase Auth
+            const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
+            const user = userCredential.user;
+
+            // 2. Set the display name
+            await updateProfile(user, { displayName: userData.name });
+
+            // 3. Save additional info to Firestore 'users' collection
+            await addDoc(collection(db, "users"), {
+                uid: user.uid,
+                name: userData.name,
+                email: userData.email,
+                role: userData.role || 'Admin',
+                createdAt: new Date().toISOString()
+            });
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error en registro:", error);
+            return { success: false, message: error.message };
+        }
     },
 
     async updateUser(id, updatedData) {
